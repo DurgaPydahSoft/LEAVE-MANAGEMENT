@@ -1,0 +1,8 @@
+body {
+  background-image: url('./components/images/PYDAH\ LOGO.png'); /* Path to your image */
+  background-repeat: repeat; /* Tiling effect */
+  background-size: 100px 80px; /* Adjust size to make the watermark small */
+  background-position: center; /* Ensures uniform distribution */
+  background-attachment: fixed; /* Keeps it fixed while scrolling */
+  /* Faint watermark effect */
+}
