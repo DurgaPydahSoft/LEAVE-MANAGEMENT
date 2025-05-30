@@ -22,10 +22,7 @@ app.use((req, res, next) => {
 
 // CORS configuration
 const corsOptions = {
-  origin: [
-    'https://leave-management-pied.vercel.app',
-    'https://leave-management-4i9x.onrender.com'
-  ],
+  origin: ['http://localhost:3000', 'http://localhost:5000'],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'x-auth-token'],
   exposedHeaders: ['Authorization'],
