@@ -1,7 +1,6 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const Employee = require("../models/Employee");
-const Admin = require("../models/Admin");
+const { Employee, User } = require("../models");
 
 // Predefined admin credentials
 const predefinedAdmins = [
@@ -11,124 +10,225 @@ const predefinedAdmins = [
 
 // Employee Registration
 exports.registerEmployee = async (req, res) => {
+  try {
   const {
-    name,
+      firstName,
+      lastName,
     email,
     password,
     employeeId,
-    department,
-    designation,
-    mobileNo,
+      phoneNumber,
+      campus,
+      department
   } = req.body;
 
-  try {
-    let employee = await Employee.findOne({ email });
-    if (employee) {
-      return res
-        .status(400)
-        .json({ msg: "Employee with this email already exists" });
+    // Validate required fields
+    if (!firstName || !lastName || !email || !password || !employeeId || !phoneNumber || !campus || !department) {
+      return res.status(400).json({ msg: 'Please provide all required fields' });
     }
 
-    employee = await Employee.findOne({ employeeId });
+    // Check if employee ID already exists
+    let employee = await Employee.findOne({ employeeId });
     if (employee) {
-      return res
-        .status(400)
-        .json({ msg: "Employee with this ID already exists" });
+      return res.status(400).json({ msg: 'Employee with this ID already exists' });
     }
 
+    // Check if email already exists
+    employee = await Employee.findOne({ email: email.toLowerCase() });
+    if (employee) {
+      return res.status(400).json({ msg: 'Employee with this email already exists' });
+    }
+
+    // Create new employee
     employee = new Employee({
-      name,
-      email,
+      name: `${firstName} ${lastName}`,
+      email: email.toLowerCase(),
       password,
       employeeId,
+      phoneNumber,
+      designation: 'Faculty', // Default designation
       department,
-      designation,
-      mobileNo,
-      leaveRequests: [],
+      campus: campus.toLowerCase(),
+      branchCode: department,
+      status: 'active',
+      leaveRequests: []
     });
 
+    // Hash password
     const salt = await bcrypt.genSalt(10);
     employee.password = await bcrypt.hash(password, salt);
+    
     await employee.save();
 
-    res.status(201).json({ msg: "Employee registered successfully" });
+    res.status(201).json({
+      msg: 'Employee registered successfully',
+      employee: {
+        id: employee._id,
+        name: employee.name,
+        email: employee.email,
+        employeeId: employee.employeeId,
+        department: employee.department,
+        campus: employee.campus
+      }
+    });
   } catch (err) {
-    console.error(err.message);
-    res.status(500).send("Server Error");
+    console.error('Employee Registration Error:', err);
+    res.status(500).json({ msg: err.message || 'Server error' });
   }
 };
 
 // Employee Login
 exports.loginEmployee = async (req, res) => {
-  const { employeeId, password } = req.body;
   try {
-    const employee = await Employee.findOne({ employeeId });
-    if (!employee) return res.status(400).json({ msg: "Invalid credentials" });
+    const { employeeId, password } = req.body;
 
-    const isMatch = await bcrypt.compare(password, employee.password);
-    if (!isMatch) return res.status(400).json({ msg: "Invalid credentials" });
+    console.log('Login attempt:', { employeeId, password: '***' });
 
-    const payload = { employee: { id: parseInt(employee.employeeId) } };
-    jwt.sign(
+    if (!employeeId || !password) {
+      console.log('Missing required fields:', { employeeId: !!employeeId, password: !!password });
+      return res.status(400).json({ msg: 'Please provide all required fields' });
+    }
+
+    // Find employee by employee ID (try both with and without toString)
+    let employee = await Employee.findOne({ employeeId });
+    if (!employee) {
+      // Try with toString in case it's a number
+      employee = await Employee.findOne({ employeeId: employeeId.toString() });
+    }
+    
+    if (!employee) {
+      console.log('Employee not found:', { employeeId });
+      return res.status(400).json({ msg: 'Invalid credentials' });
+    }
+
+    console.log('Employee found:', { 
+      id: employee._id,
+      employeeId: employee.employeeId,
+      status: employee.status
+    });
+
+    // Check if employee is active
+    if (employee.status !== 'active') {
+      console.log('Employee account inactive:', { employeeId, status: employee.status });
+      return res.status(401).json({ msg: 'Account is inactive' });
+    }
+
+    // Use the schema's comparePassword method
+    const isMatch = await employee.comparePassword(password);
+    console.log('Password comparison result:', { employeeId, isMatch });
+    
+    if (!isMatch) {
+      console.log('Password mismatch for employee:', { employeeId });
+      return res.status(400).json({ msg: 'Invalid credentials' });
+    }
+
+    const payload = {
+      id: employee._id,
+      role: 'employee',
+      campus: employee.campus,
+      department: employee.department
+    };
+
+    const token = jwt.sign(
       payload,
       process.env.JWT_SECRET,
-      { expiresIn: "24h" },
-      (err, token) => {
-        if (err) throw err;
-        res.json({ token, employeeId: employee.employeeId });
-      }
+      { expiresIn: '24h' }
     );
+
+    // Update last login
+    employee.lastLogin = Date.now();
+    await employee.save();
+
+    console.log('Login successful:', { 
+      employeeId,
+      name: employee.name,
+      department: employee.department,
+      campus: employee.campus
+    });
+
+    res.json({
+      token,
+      user: {
+        id: employee._id,
+        name: employee.name,
+        email: employee.email,
+        employeeId: employee.employeeId,
+        department: employee.department,
+        campus: employee.campus,
+        lastLogin: employee.lastLogin
+      }
+    });
   } catch (err) {
-    console.error(err.message);
-    res.status(500).send("Server Error");
+    console.error('Employee Login Error:', err);
+    res.status(500).json({ msg: err.message || 'Server error' });
   }
 };
 
 // Admin Login
 exports.loginAdmin = async (req, res) => {
-  const { employeeId, password } = req.body;
-   console.log('Admin login attempt:', { employeeId, password });
   try {
-    const admin = predefinedAdmins.find(admin => admin.employeeId === employeeId);
-    if (!admin) return res.status(400).json({ msg: "Invalid credentials" });
+    console.log("Admin login attempt - Request body:", req.body);
+    const { employeeId, password } = req.body;
 
-    const isMatch = password === admin.password;
-    
-    if (!isMatch) {
-      console.log('Password mismatch');
-      return res.status(400).json({ msg: "Invalid credentials" });
+    // Validate input parameters
+    if (!employeeId || !password) {
+      console.log("Missing credentials:", { employeeId, password });
+      return res.status(400).json({ msg: "Please provide all credentials" });
     }
 
-    console.log('Admin authentication successful');
+    // Convert employeeId to number for comparison
+    const numericEmployeeId = parseInt(employeeId);
+    if (isNaN(numericEmployeeId)) {
+      console.log("Invalid employeeId format:", employeeId);
+      return res.status(400).json({ msg: "Invalid employee ID format" });
+    }
+
+    console.log("Checking admin credentials:", { numericEmployeeId, password });
     
-    const payload = { 
-      admin: { 
-        id: admin.employeeId,
-        role: 'admin'
-      } 
-    };
-    
-    jwt.sign(
-      payload,
-      process.env.JWT_SECRET,
-      { expiresIn: "24h" },
-      (err, token) => {
-        if (err) {
-          console.error('Token generation error:', err);
-          throw err;
-        }
-        console.log('Token generated successfully');
-        res.status(200).json({ 
-          success: true,
-          token, 
-          employeeId: admin.employeeId,
-          role: 'admin',
-          msg: 'Admin login successful'
-        });
-      }
+    // Check against predefined admin credentials
+    const admin = predefinedAdmins.find(
+      admin => admin.employeeId === numericEmployeeId && admin.password === password
     );
+
+    if (admin) {
+      console.log("Admin credentials matched");
+      
+      // Create payload for JWT
+      const payload = {
+        admin: {
+          id: numericEmployeeId,
+          role: "admin"
+        }
+      };
+
+      // Generate JWT token
+      const token = jwt.sign(
+        payload,
+        process.env.JWT_SECRET,
+        { expiresIn: "24h" }
+      );
+
+      console.log("Token generated successfully");
+      
+      // Send response with token and user data
+      const responseData = {
+        success: true,
+        token,
+        admin: {
+          id: numericEmployeeId,
+          role: "admin"
+        },
+        msg: "Admin login successful"
+      };
+
+      console.log("Sending response:", responseData);
+      res.status(200).json(responseData);
+    } else {
+      console.log("Invalid admin credentials:", { numericEmployeeId, password });
+      res.status(400).json({ msg: "Invalid credentials" });
+    }
   } catch (err) {
-    console.error('Server error:', err);
-    res.status(500).json({ msg: "Server Error" });
+    console.error("Admin login error:", err);
+    res.status(500).json({ msg: "Server error" });
   }
 };

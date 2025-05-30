@@ -1,52 +1,135 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import LeaveForm from "../components/LeaveForm";
+import axios from "axios";
+import { toast } from 'react-toastify';
+import LeaveApplicationForm from "../components/LeaveApplicationForm";
+import CCLRequestForm from "../components/CCLRequestForm";
+import CCLWorkRequestForm from '../components/CCLWorkRequestForm';
+import { createAuthAxios } from '../utils/authAxios';
+
+const API_BASE_URL = 'http://localhost:5000/api';
 
 const EmployeeDashboard = () => {
   const [employee, setEmployee] = useState(null);
   const [showLeaveForm, setShowLeaveForm] = useState(false);
-  const [selectedLeave, setSelectedLeave] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [showCCLForm, setShowCCLForm] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [leaveHistory, setLeaveHistory] = useState([]);
+  const [cclHistory, setCclHistory] = useState([]);
+  const [cclWork, setCclWork] = useState([]);
+  const [cclWorkHistory, setCclWorkHistory] = useState([]);
+
   const navigate = useNavigate();
 
-  useEffect(() => {
-    setLoading(true);
-    const fetchEmployee = async () => {
-      const token = localStorage.getItem("token");
-      const employeeId = localStorage.getItem("employeeId");
+  const fetchEmployee = useCallback(async () => {
+    const token = localStorage.getItem('token');
+    const employeeId = localStorage.getItem('employeeId');
 
-      if (!token || !employeeId) return navigate("/login");
+    if (!token || !employeeId) {
+      navigate('/login', { replace: true });
+      return;
+    }
 
-      try {
-        const response = await fetch(`https://pydah-lms-backend.onrender.com/api/employee/${employeeId}`, {
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        });
+    try {
+      const authAxios = createAuthAxios(token);
+      const response = await authAxios.get(`/employee/${employeeId}`);
 
-        if (!response.ok) throw new Error("Failed to fetch employee details");
-
-        const data = await response.json();
-
-        // Sort leave requests by status priority
-        if (data.leaveRequests) {
-          const order = ["Pending", "Forwarded by HOD", "Approved", "Rejected"];
-          data.leaveRequests.sort((a, b) => order.indexOf(a.status) - order.indexOf(b.status));
-        }
-
-        setEmployee(data);
-      } catch (error) {
-        console.error(error);
+      if (response.data) {
+        setEmployee(response.data);
+        // Sort leave requests by date, most recent first
+        const sortedLeaves = (response.data.leaveRequests || []).sort((a, b) => 
+          new Date(b.createdAt) - new Date(a.createdAt)
+        );
+        setLeaveHistory(sortedLeaves);
+        setError('');
       }
-    };
-
-    fetchEmployee();
-    setLoading(false);
+    } catch (error) {
+      console.error('Error fetching employee details:', error);
+      const errorMsg = error.response?.data?.message || 'Failed to fetch employee details';
+      setError(errorMsg);
+      toast.error(errorMsg);
+      
+      if (error.response?.status === 401) {
+        localStorage.clear();
+        navigate('/login', { replace: true });
+      }
+    } finally {
+      setLoading(false);
+    }
   }, [navigate]);
+
+  const fetchCCLHistory = useCallback(async () => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    try {
+      const authAxios = createAuthAxios(token);
+      const response = await authAxios.get('/employee/ccl-history');
+      if (response.data.success) {
+        setCclHistory(response.data.data.cclHistory || []);
+        setCclWork(response.data.data.cclWork || []);
+      }
+    } catch (error) {
+      console.error('Error fetching CCL history:', error);
+      toast.error('Failed to fetch CCL history');
+    }
+  }, []);
+
+  const fetchCclWorkHistory = useCallback(async () => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    try {
+      const authAxios = createAuthAxios(token);
+      const response = await authAxios.get('/employee/ccl-work-history');
+      console.log('CCL Work History Response:', response.data); // Debug log
+      
+      if (response.data.success) {
+        const workHistory = response.data.data || [];
+        console.log('Setting CCL Work History:', workHistory); // Debug log
+        setCclWorkHistory(workHistory);
+      }
+    } catch (error) {
+      console.error('Error fetching CCL work history:', error);
+      toast.error('Failed to fetch CCL work history');
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchEmployee();
+    fetchCCLHistory();
+    fetchCclWorkHistory();
+  }, [fetchEmployee, fetchCCLHistory, fetchCclWorkHistory]);
 
   const handleLogout = () => {
     if (window.confirm("Are you sure you want to log out?")) {
-      localStorage.removeItem("token");
-      localStorage.removeItem("employeeId");
-      navigate("/login");
+      localStorage.clear();
+      navigate('/login', { replace: true });
+    }
+  };
+
+  const handleLeaveSubmit = (newLeaveRequest) => {
+    setLeaveHistory(prev => [newLeaveRequest, ...prev]);
+    setShowLeaveForm(false);
+  };
+
+  const handleCCLSubmit = async (newCCLWork) => {
+    try {
+      // Close the form
+      setShowCCLForm(false);
+      
+      // Show success message
+      toast.success('CCL work request submitted successfully');
+      
+      // Refresh both CCL history and work history
+      await Promise.all([
+        fetchCCLHistory(),
+        fetchCclWorkHistory()
+      ]);
+    } catch (error) {
+      console.error('Error handling CCL submission:', error);
+      toast.error('Failed to refresh CCL history');
     }
   };
 
@@ -54,11 +137,9 @@ const EmployeeDashboard = () => {
     return (
       <div className="flex justify-center items-center h-screen">
         <div className="flex flex-col items-center">
-          {/* Animated Loader */}
-          <div className="w-16 h-16 border-4 border-primary  rounded-2xl animate-spin"></div>
-
+          <div className="w-16 h-16 border-4 border-primary rounded-2xl animate-spin"></div>
           <p className="mt-4 text-lg font-semibold text-gray-700">
-            Processing Your Request, please wait...
+            Loading your dashboard...
           </p>
         </div>
       </div>
@@ -66,158 +147,226 @@ const EmployeeDashboard = () => {
   }
 
   return (
-    <div className="p-4 md:p-6 bg-background min-h-screen">
+    <div className="min-h-screen bg-background p-8">
+      <div className="max-w-7xl mx-auto">
       {/* Header */}
-      <div className="flex flex-row md:flex-row justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-primary">Employee Dashboard</h1>
-        <button
-          onClick={handleLogout}
-          className="bg-red-600 text-white px-4 py-2 rounded shadow-lg transition-all duration-300 hover:bg-red-700"
-        >
-          Logout
-        </button>
+        <div className="bg-secondary p-6 rounded-neumorphic shadow-outerRaised mb-8">
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-3xl font-bold text-primary">Welcome, {employee?.name}</h1>
+              <p className="text-gray-600 mt-1">
+                Employee ID: {employee?.employeeId} | Department: {employee?.department}
+              </p>
+            </div>
+            <button
+              onClick={handleLogout}
+              className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600"
+            >
+              Logout
+            </button>
+          </div>
+        </div>
+
+        {/* Leave Balance Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          <div className="bg-secondary p-6 rounded-neumorphic shadow-outerRaised">
+            <h2 className="text-xl font-semibold text-primary mb-4">Leave Balance</h2>
+            <div className="text-3xl font-bold text-gray-800">{employee?.leaveBalance || 0}</div>
+            <p className="text-gray-600 mt-2">Available Leave Days</p>
+          </div>
+          <div className="bg-secondary p-6 rounded-neumorphic shadow-outerRaised">
+            <h2 className="text-xl font-semibold text-primary mb-4">CCL Balance</h2>
+            <div className="text-3xl font-bold text-gray-800">{employee?.cclBalance || 0}</div>
+            <p className="text-gray-600 mt-2">Available CCL Days</p>
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex space-x-4 mb-8">
+          <button
+            onClick={() => setShowLeaveForm(true)}
+            className="px-6 py-3 bg-primary text-white rounded-neumorphic shadow-outerRaised 
+                     hover:shadow-innerSoft transition-all duration-300"
+          >
+            Apply for Leave
+          </button>
+          <button
+            onClick={() => setShowCCLForm(true)}
+            className="px-6 py-3 bg-green-500 text-white rounded-neumorphic shadow-outerRaised 
+                     hover:shadow-innerSoft transition-all duration-300"
+          >
+            Submit CCL Work
+          </button>
       </div>
 
-      {employee && (
-        <div className="bg-secondary p-6 rounded-neumorphic shadow-outerRaised mb-6">
-          <h2 className="text-xl font-semibold mb-4 text-primary">Employee Information</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {Object.entries(employee)
-              .filter(([key]) => key !== "leaveRequests")
-              .map(([key, value]) => (
-                <div key={key} className="border-b pb-2 text-textDark">
-                  <strong className="capitalize">{key.replace(/__v/g, "Applied Leave Requests").replace(/_/g, " ")}</strong>: {value}
-                </div>
-
-              ))}
-            <div className="border-b pb-2 text-textDark">
-              <p>
-                <strong className="text-textDark">Approved Leaves:</strong> {12 - employee.leaveBalance} days
-              </p></div>
-          </div>
-        </div>
-      )}
-
-      {/* Apply Leave Button */}
-      <button
-        onClick={() => setShowLeaveForm(true)}
-        className="bg-primary text-white px-4 py-2 rounded shadow-lg transition-all duration-300 hover:bg-darkGold mb-6 w-full sm:w-auto"
-      >
-        Apply Leave
-      </button>
-
-      {/* Leave Form */}
-      {showLeaveForm && (
-        <div className="bg-secondary p-6 rounded-neumorphic shadow-outerRaised mb-6">
-          <LeaveForm onClose={() => setShowLeaveForm(false)} employeeId={employee.employeeId} leaveBalance={employee.leaveBalance} />
-        </div>
-      )}
-
-      {/* Leave Requests */}
-      {employee?.leaveRequests && (
-        <div className="bg-secondary p-6 rounded-neumorphic shadow-outerRaised">
-          <h2 className="text-xl font-semibold mb-4 text-primary">Leave Requests</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {employee.leaveRequests.map((leave) => (
-              <div
-                key={leave._id}
-                className={`p-5 rounded-lg shadow-lg cursor-pointer transition-all duration-300 transform hover:scale-105 border-l-8 ${leave.status === "Pending"
-                    ? "border-yellow-500 bg-yellow-100"
-                    : leave.status === "Forwarded by HOD"
-                      ? "border-blue-500 bg-blue-100"
-                      : leave.status === "Approved"
-                        ? "border-green-500 bg-green-100"
-                        : "border-red-500 bg-red-100"
-                  }`}
-                onClick={() => setSelectedLeave(leave)}
-              >
-                <p className="font-semibold text-lg text-textDark">{employee.name}</p>
-                <p><strong>Start:</strong> {new Date(leave.startDate).toDateString()}</p>
-                <p><strong>End:</strong> {new Date(leave.endDate).toDateString()}</p>
-                <p><strong>Reason:</strong> {leave.reason}</p>
-                <p className="mt-2 text-sm font-semibold uppercase">{leave.status}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {selectedLeave && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 p-2 sm:p-4">
-          <div className="bg-secondary p-4 sm:p-6 rounded-neumorphic  w-full max-w-md sm:max-w-lg md:max-w-3xl lg:max-w-4xl h-auto max-h-[90vh] overflow-y-auto">
-            <h2 className="text-lg sm:text-xl font-semibold mb-4 text-primary text-center">Leave Details</h2>
-
-            {/* Main Content Wrapper */}
-            <div className="flex flex-col md:flex-row gap-4 sm:gap-6">
-              {/* Left Side: Leave Details */}
-              <div className="w-full md:w-1/2">
-                <div className="grid grid-cols-1 gap-3 text-sm sm:text-base text-textDark">
-                  <p><strong>Employee:</strong> {employee.name}</p>
-                  <p><strong>Department:</strong> {employee.department}</p>
-                  <p><strong>Leave Type:</strong> {selectedLeave.leaveType}</p>
-                  <p><strong>Status:</strong> {selectedLeave.status}</p>
-                  <p><strong>Start Date:</strong> {new Date(selectedLeave.startDate).toDateString()}</p>
-                  <p><strong>End Date:</strong> {new Date(selectedLeave.endDate).toDateString()}</p>
-                  <p><strong>Reason:</strong> {selectedLeave.reason}</p>
-                  <p><strong>Remarks:</strong> {selectedLeave.remarks || "N/A"}</p>
-                </div>
+        {/* CCL Section */}
+        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold text-gray-900">CCL Management</h2>
+            <button
+              onClick={() => setShowCCLForm(true)}
+              className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+            >
+              Submit CCL Work
+            </button>
               </div>
 
-              {/* Right Side: Alternate Schedule */}
-              {selectedLeave.alternateSchedule && selectedLeave.alternateSchedule.length > 0 && (
-                <div className="w-full md:w-1/2">
-                  <h3 className="text-md sm:text-lg font-semibold mb-2 text-primary">Alternate Schedule</h3>
-                  <div className="overflow-x-auto">
-                    <table className="w-full border border-blue-500 text-xs sm:text-sm">
-                      <thead>
-                        <tr className="bg-green-300 text-textDark">
-                          <th className="border p-1 sm:p-2">Period</th>
-                          <th className="border p-1 sm:p-2">Lecturer</th>
-                          <th className="border p-1 sm:p-2">Class</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {selectedLeave.alternateSchedule
-                          .slice()
-                          .sort((a, b) => a.periodNumber - b.periodNumber)
-                          .map((schedule, index) => {
-                            const isAssigned =
-                              schedule.lecturerName &&
-                              schedule.lecturerName.toLowerCase() !== "leisure" &&
-                              schedule.classAssigned;
-                            return (
-                              <tr
-                                key={index}
-                                className={`text-center ${isAssigned
-                                    ? "bg-green-200 text-green-800 font-semibold"
-                                    : "bg-red-200 text-red-700 font-semibold"
-                                  }`}
-                              >
-                                <td className="border p-1 sm:p-2">Period {schedule.periodNumber}</td>
-                                <td className="border p-1 sm:p-2">{schedule.lecturerName || "Not Assigned"}</td>
-                                <td className="border p-1 sm:p-2">{schedule.classAssigned || "N/A"}</td>
-                              </tr>
-                            );
-                          })}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* CCL Balance */}
+            <div className="bg-gray-50 rounded-lg p-4">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">CCL Balance</h3>
+              <p className="text-3xl font-bold text-blue-600">{employee?.cclBalance || 0} days</p>
             </div>
 
-            {/* Close Button */}
-            <button
-              onClick={() => setSelectedLeave(null)}
-              className="mt-4 w-full bg-primary text-white px-3 sm:px-4 py-2 rounded text-sm sm:text-base transition-all duration-300 hover:bg-darkGold"
-            >
-              Close
-            </button>
+            {/* CCL History */}
+            <div className="bg-gray-50 rounded-lg p-4">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Recent CCL History</h3>
+              <div className="space-y-2">
+                {cclHistory.slice(0, 5).map((record, index) => (
+                  <div key={index} className="flex justify-between items-center text-sm">
+                    <span className="text-gray-600">
+                      {new Date(record.date).toLocaleDateString()}
+                    </span>
+                    <span className={`font-medium ${record.type === 'earned' ? 'text-green-600' : 'text-red-600'}`}>
+                      {record.type === 'earned' ? '+' : '-'}{record.days} days
+                    </span>
+                  </div>
+                ))}
+              </div>
+              </div>
+            </div>
+
+          {/* CCL Work History */}
+          <div className="mt-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">CCL Work History</h3>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Assigned BY</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reason</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">HOD Remarks</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Principal Remarks</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {cclWorkHistory && cclWorkHistory.length > 0 ? (
+                    cclWorkHistory.map((work) => (
+                      <tr key={work._id}>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {work.date ? new Date(work.date).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric'
+                          }) : '-'}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {work.assignedTo || '-'}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-900">
+                          {work.reason || '-'}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                            ${work.status === 'Approved' ? 'bg-green-100 text-green-800' : 
+                              work.status === 'Rejected' ? 'bg-red-100 text-red-800' : 
+                              'bg-yellow-100 text-yellow-800'}`}>
+                            {work.status || 'Pending'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-900">
+                          {work.hodRemarks || '-'}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-900">
+                          {work.principalRemarks || '-'}
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="6" className="px-6 py-4 text-center text-sm text-gray-500">
+                        No CCL work history found
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        {/* Leave History */}
+        <div className="bg-secondary p-6 rounded-neumorphic shadow-outerRaised">
+          <h2 className="text-xl font-semibold text-primary mb-4">Leave History</h2>
+          {leaveHistory.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Duration</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Applied On</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {leaveHistory.map((leave, index) => (
+                    <tr key={index}>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{leave.leaveType}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {new Date(leave.startDate).toLocaleDateString()} - {new Date(leave.endDate).toLocaleDateString()}
+                        {leave.isHalfDay && ' (Half Day)'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                        ${leave.status === 'Approved' ? 'bg-green-100 text-green-800' : 
+                          leave.status === 'Rejected' ? 'bg-red-100 text-red-800' : 
+                          'bg-yellow-100 text-yellow-800'}`}>
+                        {leave.status}
+                      </span>
+                    </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {new Date(leave.appliedOn).toLocaleDateString()}
+                      </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          ) : (
+            <p className="text-gray-500 text-center py-4">No leave history available</p>
+          )}
+        </div>
+      </div>
+
+      {/* Leave Application Form Modal */}
+      {showLeaveForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg p-6 max-w-2xl w-full">
+        <LeaveApplicationForm
+          onSubmit={handleLeaveSubmit}
+          onClose={() => setShowLeaveForm(false)}
+          employee={employee}
+          loading={loading}
+        />
+          </div>
+        </div>
+      )}
+
+      {/* CCL Request Form Modal */}
+      {showCCLForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg p-6 max-w-2xl w-full">
+            <CCLWorkRequestForm
+              onSubmit={handleCCLSubmit}
+              onClose={() => setShowCCLForm(false)}
+            />
           </div>
         </div>
       )}
     </div>
-
   );
 };
 

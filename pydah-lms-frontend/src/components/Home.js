@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ReactTyped} from "react-typed";
 import Slider from "react-slick";
@@ -10,8 +10,19 @@ import Durga_Prasad from './images/PIC_DP.jpg';
 import Ravi from './images/ravi_IMAGE.jpg';
 import PullToRefresh from "./PullToRefresh";
 
-export default function Home() {
+const LandingPage = () => {
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const employeeId = searchParams.get('employeeId');
+    const password = searchParams.get('password');
+
+    if (employeeId && password) {
+      console.log("URL parameters found, redirecting to login");
+      navigate(`/login?employeeId=${employeeId}&password=${password}`);
+    }
+  }, [navigate]);
 
   const sliderSettings = {
     dots: true,
@@ -24,19 +35,16 @@ export default function Home() {
     autoplaySpeed: 3000,
   };
 
-  <script>
-  AOS.init();
-</script>
 const handleRefresh = () => {
   console.log("Refreshing data...");
   // Call API or refresh state here
 };
 
   return (
-    <div className="flex flex-col min-h-screen bg-secondary text-textDark ">
+    <div className="flex flex-col min-h-screen bg-secondary text-textDark">
       <PullToRefresh onRefresh={handleRefresh} />
       {/* Hero Section */}
-      <div className="sticky flex flex-col md:flex-row items-center justify-around px-6 py-16 md:py-32 bg-secondary shadow-outRaised text-textDark border-b-8 border-primary rounded-neumorphic ">
+      <div className="sticky flex flex-col md:flex-row items-center justify-around px-6 py-16 md:py-32 bg-secondary shadow-outRaised text-textDark border-b-8 border-primary rounded-neumorphic">
       <div className="max-w-3xl">
       {/* Typing Effect Heading */}
       <h1 className="text-4xl md:text-5xl font-heading">
@@ -57,11 +65,9 @@ const handleRefresh = () => {
       </p>
 
       <button
-      
         className="mt-6 px-6 py-3 bg-accent text-textDark font-semibold rounded-neumorphic shadow-md
-                   hover:shadow-none border-2 border-primary active:shadow-innerSoft transition-all duration-300
-                   "
-        onClick={() => navigate("/login")}
+                     hover:shadow-none border-2 border-primary active:shadow-innerSoft transition-all duration-300"
+            onClick={() => navigate("/home")}
       >
         Get Started
       </button>
@@ -89,7 +95,7 @@ const handleRefresh = () => {
       </div>
 
       {/* About College Section */}
-      <div className="flex py-16 px-6 bg-white rounded-neumorphic shadow-innerSoft flex-row justify-around" >
+      <div className="flex py-16 px-6 bg-white rounded-neumorphic shadow-innerSoft flex-row justify-around">
         <div className="max-w-5xl mx-auto grid grid-cols-1 sm:grid-cols-2 gap-16 items-center">
           {/* Image Section */}
           <div className="relative rounded-neumorphic shadow-innerSoft overflow-hidden">
@@ -115,7 +121,7 @@ const handleRefresh = () => {
 
       {/* Features Section */}
       <div className="py-16 px-6 bg-secondary rounded-neumorphic shadow-innerSoft">
-        <div  className="max-w-5xl mx-auto text-center">
+        <div className="max-w-5xl mx-auto text-center">
           <h2 className="text-3xl font-heading text-primary">Why Choose Our System?</h2>
           <p className="mt-2 text-textDark">A seamless leave management experience.</p>
         </div>
@@ -137,7 +143,7 @@ const handleRefresh = () => {
       </div>
 
       {/* Contact Section */}
-      <div className="py-16 px-6 bg-primary text-center rounded-neumorphic ">
+      <div className="py-16 px-6 bg-primary text-center rounded-neumorphic">
         <h2 className="text-3xl font-heading text-white mb-2">Need Assistance?</h2>
         
        {/* Developers Section */}
@@ -178,8 +184,8 @@ const handleRefresh = () => {
       />
       <h3 className="text-xl font-semibold text-primary mt-4">Durga Prasad</h3>
       <p className="text-textDark">Full Stack Developer</p>
-      <p className="mt-2  text-sm text-gray-600 rounded-md p-2 shadow-inner">
-        Skilled in <strong>React, Node.js, and MongoDB</strong>,specializes in building <strong>responsive web applications</strong>. He is passionate about clean UI/UX and backend optimization.
+              <p className="mt-2 text-sm text-gray-600 rounded-md p-2 shadow-inner">
+                Skilled in <strong>React, Node.js, and MongoDB</strong>, specializes in building <strong>responsive web applications</strong>. He is passionate about clean UI/UX and backend optimization.
       </p>
       <a
         href="https://www.linkedin.com/in/durga-prasad-kakileti-bannu/"
@@ -193,10 +199,9 @@ const handleRefresh = () => {
     </div>
   </div>
 </div>
-
-
-
       </div>
     </div>
   );
-}
+};
+
+export default LandingPage;

@@ -2,8 +2,9 @@ const express = require("express");
 const connectDB = require("./config/db");
 const authRoutes = require("./routes/authRoutes");
 const employeeRoutes = require("./routes/employeeRoutes");
-const adminRoutes = require("./routes/adminRoutes");
 const hodRoutes = require("./routes/hodRoutes"); // Import HOD routes
+const superAdminRoutes = require("./routes/superAdminRoutes"); // Import Super Admin routes
+const principalRoutes = require("./routes/principalRoutes"); // Import Principal routes
 const dotenv = require("dotenv");
 const cors = require("cors");
 
@@ -11,19 +12,70 @@ dotenv.config();
 connectDB();
 
 const app = express();
+
+// Debug logging middleware
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+  console.log('Request Headers:', req.headers);
+  next();
+});
+
+// CORS configuration
 const corsOptions = {
-  origin: '*', // Replace with your frontend URL
-  methods: ["GET", "POST", "PUT", "DELETE"], // Allowed HTTP methods
-  // allowedHeaders: ["Content-Type", "Authorization"], // Allowed headers
-  credentials: true, // Allow cookies (if needed)
+  origin: ['http://localhost:3000', 'http://localhost:5000'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-auth-token'],
+  exposedHeaders: ['Authorization'],
+  credentials: true,
+  preflightContinue: false,
+  optionsSuccessStatus: 204
 };
+
 app.use(cors(corsOptions));
 app.use(express.json());
 
+// Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/employee", employeeRoutes);
-app.use("/api/admin", adminRoutes);
-app.use("/api/hod", hodRoutes); // Add HOD routes
+app.use("/api/hod", hodRoutes);
+app.use("/api/super-admin", superAdminRoutes);
+app.use("/api/principal", principalRoutes);
+
+// Debug route to check if server is running
+app.get("/api/health", (req, res) => {
+  res.json({ status: "ok", timestamp: new Date() });
+});
+
+// Debug middleware to log all registered routes
+app._router.stack.forEach(function(r){
+  if (r.route && r.route.path){
+    console.log('Registered route:', r.route.stack[0].method.toUpperCase(), r.route.path);
+  } else if (r.name === 'router') {
+    r.handle.stack.forEach(function(layer) {
+      if (layer.route) {
+        console.log('Registered route:', layer.route.stack[0].method.toUpperCase(), r.regexp, layer.route.path);
+      }
+    });
+  }
+});
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error('Error:', err);
+  console.error('Stack:', err.stack);
+  res.status(500).json({ 
+    msg: 'Something broke!',
+    error: process.env.NODE_ENV === 'development' ? err.message : 'Internal server error'
+  });
+});
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+  console.log('Available routes:');
+  console.log('- /api/auth');
+  console.log('- /api/employee');
+  console.log('- /api/hod');
+  console.log('- /api/super-admin');
+  console.log('- /api/principal');
+});

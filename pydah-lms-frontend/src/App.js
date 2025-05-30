@@ -1,37 +1,135 @@
 import React from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import Login from "./pages/Login";
+import { BrowserRouter as Router, Routes, Route, Navigate, useParams } from "react-router-dom";
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import LandingPage from "./components/Home";
+import Home from "./components/Home.jsx";
+import SuperAdminLogin from "./pages/SuperAdminLogin";
+import SuperAdminDashboard from "./pages/SuperAdminDashboard";
+import PrincipalLogin from "./pages/PrincipalLogin";
+import PrincipalDashboard from "./pages/PrincipalDashboard";
+import EmployeeLogin from "./pages/EmployeeLogin";
+import EmployeeRegister from "./pages/EmployeeRegister";
 import EmployeeDashboard from "./pages/EmployeeDashboard";
-import AdminDashboard from "./pages/AdminDashboard";
-import HodLogin from "./pages/HodLogin"; // Import HOD Login page
-import HodRegister from "./pages/HodRegister"; // Import HOD Registration page
-import HodDashboard from "./pages/HodDashboard"; // Import HOD Dashboard
+import HodLogin from "./pages/HodLogin";
+import HodDashboard from "./pages/HodDashboard";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
-import "./App.css"; // Import App CSS file
+import "./App.css";
 
-import Home from "./components/Home"
+// Protected Route Component
+const ProtectedRoute = ({ children, allowedRoles }) => {
+  const token = localStorage.getItem("token");
+  const userRole = localStorage.getItem("role");
+
+  if (!token) {
+    return <Navigate to="/" replace />;
+  }
+
+  if (allowedRoles && !allowedRoles.includes(userRole)) {
+    return <Navigate to="/" replace />;
+  }
+
+  return children;
+};
+
+// Campus Principal Login Component
+const CampusPrincipalLogin = () => {
+  const { campus } = useParams();
+  return <PrincipalLogin campus={campus} />;
+};
+
+// Campus Principal Dashboard Component
+const CampusPrincipalDashboard = () => {
+  const { campus } = useParams();
+  const userCampus = localStorage.getItem("campus");
+
+  if (campus !== userCampus) {
+    return <Navigate to="/" replace />;
+  }
+
+  return <PrincipalDashboard />;
+};
 
 const App = () => {
   return (
-    <>
-    <div className="bg-secondary">
-    <Header />
     <Router>
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/employee-dashboard" element={<EmployeeDashboard />} />
-        <Route path="/admin-dashboard" element={<AdminDashboard />} />
-        <Route path="/hod-login" element={<HodLogin />} /> {/* HOD Login */}
-        <Route path="/hod-register" element={<HodRegister />} /> {/* HOD Registration */}
-        <Route path="/hod-dashboard" element={<HodDashboard />} /> {/* HOD Dashboard */}
-        
-        <Route path="/" element={<Home />} /> {/* Default page */}
-      </Routes>
+      <div className="min-h-screen bg-background">
+        <Header />
+        <ToastContainer
+          position="top-right"
+          autoClose={3000}
+          hideProgressBar={false}
+          newestOnTop
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+          theme="light"
+        />
+        <Routes>
+          {/* Public Routes */}
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/home" element={<Home />} />
+          <Route path="/super-admin-login" element={<SuperAdminLogin />} />
+          
+          {/* Campus Principal Login Routes */}
+          <Route path="/:campus/principal-login" element={<CampusPrincipalLogin />} />
+
+          {/* Employee Routes */}
+          <Route path="/employee-login" element={<EmployeeLogin />} />
+          <Route path="/employee-register" element={<EmployeeRegister />} />
+          
+          {/* HOD Routes */}
+          <Route path="/hod-login" element={<HodLogin />} />
+
+          {/* Protected Routes */}
+          <Route
+            path="/super-admin-dashboard"
+            element={
+              <ProtectedRoute allowedRoles={["superadmin"]}>
+                <SuperAdminDashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Campus Principal Dashboard */}
+          <Route 
+            path="/:campus/principal-dashboard"
+            element={
+              <ProtectedRoute allowedRoles={["principal"]}>
+                <CampusPrincipalDashboard />
+              </ProtectedRoute>
+            } 
+          />
+
+          {/* Employee Dashboard */}
+          <Route 
+            path="/employee-dashboard"
+            element={
+              <ProtectedRoute allowedRoles={["employee"]}>
+                <EmployeeDashboard />
+              </ProtectedRoute>
+            } 
+          />
+
+          {/* HOD Dashboard */}
+          <Route 
+            path="/hod-dashboard" 
+            element={
+              <ProtectedRoute allowedRoles={["hod"]}>
+                <HodDashboard />
+              </ProtectedRoute>
+            } 
+          />
+
+          {/* Fallback Route */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+        <Footer />
+      </div>
     </Router>
-    <Footer />
-    </div>
-    </>
   );
 };
 

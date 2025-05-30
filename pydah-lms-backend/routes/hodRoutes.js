@@ -1,27 +1,55 @@
-const express = require("express");
-const { registerHod, loginHod, getHodDetails, getDepartmentLeaves, updateLeaveRequest, applyHodLeave,updateHodLeaveRequest } = require("../controllers/hodController");
-const authMiddleware = require("../middleware/authMiddleware");
-
+const express = require('express');
 const router = express.Router();
+const { authHOD } = require('../middleware/auth');
+const {
+  registerHod,
+  login,
+  getProfile,
+  updateProfile,
+  getHodDetails,
+  getDepartmentLeaves,
+  updateLeaveRequest,
+  applyHodLeave,
+  getHodLeaves,
+  getDepartmentEmployees,
+  getDashboard,
+  getDepartmentStats,
+  updateEmployeeDetails,
+  resetEmployeePassword,
+  getCCLWorkRequests,
+  updateCCLWorkRequestStatus
+} = require('../controllers/hodController');
 
-// HOD Registration
-router.post("/hod-register", registerHod);
+// Auth routes (no auth required)
+router.post('/register', registerHod);
+router.post('/login', login);
 
-// HOD Login
-router.post("/hod-login", loginHod);
+// Protected routes (auth required)
+router.use(authHOD);
 
-// Get HOD Details (Protected)
-router.get("/me", authMiddleware.authHOD, getHodDetails);
+// Profile routes
+router.get('/profile', getProfile);
+router.put('/profile', updateProfile);
 
-// Get Leave Requests of Faculty in HOD's Department (Protected)
-router.get("/leaves", authMiddleware.authHOD, getDepartmentLeaves);
+// Department routes
+router.get('/department/leaves', getDepartmentLeaves);
+router.get('/department/employees', getDepartmentEmployees);
+router.get('/department/stats', getDepartmentStats);
 
-// Update Leave Status (Forward/Reject) (Protected)
-router.put("/update-leave", authMiddleware.authHOD, updateLeaveRequest);
+// Leave management routes
+router.put('/leaves/:employeeId/:leaveRequestId', updateLeaveRequest);
+router.post('/leaves', applyHodLeave);
+router.get('/leaves', getHodLeaves);
 
-// Route for HOD applying for leave
-router.post("/apply-leave",authMiddleware.authHOD, applyHodLeave);
-// New route for updating HOD leave requests
-router.put("/update-hod-leave",authMiddleware.authHOD, updateHodLeaveRequest);
+// Employee management routes
+router.put('/employees/:employeeId', updateEmployeeDetails);
+router.put('/employees/:employeeId/reset-password', resetEmployeePassword);
+
+// Dashboard routes
+router.get('/dashboard', getDashboard);
+
+// CCL routes
+router.get('/ccl-work-requests', getCCLWorkRequests);
+router.put('/ccl-work-requests/:workId', updateCCLWorkRequestStatus);
 
 module.exports = router;
