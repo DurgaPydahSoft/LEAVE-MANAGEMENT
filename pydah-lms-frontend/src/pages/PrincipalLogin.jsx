@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import axios from 'axios';
 import { validateEmail, validateCampus } from '../utils/validators';
 import config from '../config';
+import axiosInstance from '../utils/axiosConfig';
 
 const API_BASE_URL = config.API_BASE_URL;
 
@@ -43,26 +43,43 @@ const PrincipalLogin = () => {
     }
 
     try {
+      // Capitalize campus type
+      const campusType = campus.charAt(0).toUpperCase() + campus.slice(1);
+      
       console.log('Attempting principal login with:', {
         ...formData,
-        campus,
+        campus: campusType,
         url: `${API_BASE_URL}/principal/login`
       });
 
-      const response = await axios.post(
-        `${API_BASE_URL}/principal/login`,
-        { ...formData, campus }
-      );
+      const response = await axiosInstance.post('/principal/login', {
+        ...formData,
+        campus: campusType
+      });
 
       console.log('Login response:', response.data);
 
-      localStorage.setItem('token', response.data.token);
-      localStorage.setItem('role', 'principal');
-      localStorage.setItem('campus', campus);
-      navigate(`/${campus}/principal-dashboard`);
+      if (response.data.token) {
+        localStorage.setItem('token', response.data.token);
+        localStorage.setItem('role', 'principal');
+        localStorage.setItem('campus', campus);
+        navigate(`/${campus}/principal-dashboard`);
+      } else {
+        setError('Invalid response from server');
+      }
     } catch (error) {
       console.error('Login error:', error.response || error);
-      setError(error.response?.data?.msg || 'Login failed');
+      if (error.response) {
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        setError(error.response.data?.msg || 'Login failed');
+      } else if (error.request) {
+        // The request was made but no response was received
+        setError('No response from server. Please check your connection.');
+      } else {
+        // Something happened in setting up the request that triggered an Error
+        setError('Error setting up request: ' + error.message);
+      }
     } finally {
       setLoading(false);
     }
