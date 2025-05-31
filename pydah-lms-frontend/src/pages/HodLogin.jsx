@@ -55,11 +55,11 @@ const HodLogin = () => {
         password: formData.password,
         campus: formData.campus,
         branchCode: formData.branchCode,
-        url: `${API_BASE_URL}/api/hod/login`
+        url: `${API_BASE_URL}/hod/login`
       });
 
       const response = await axios.post(
-        `${API_BASE_URL}/api/hod/login`,
+        `${API_BASE_URL}/hod/login`,
         {
           email: formData.email,
           password: formData.password,
