@@ -395,7 +395,7 @@ const LeaveApplicationForm = ({ onSubmit, onClose, employee, loading }) => {
       // Debug log
       console.log('Submitting leave request with data:', formattedData);
 
-      const response = await fetch(`${API_BASE_URL}/api/employee/leave-request`, {
+      const response = await fetch(`${API_BASE_URL}/employee/leave-request`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
