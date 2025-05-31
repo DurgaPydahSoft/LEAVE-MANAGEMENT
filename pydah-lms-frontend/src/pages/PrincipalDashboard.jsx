@@ -5,6 +5,7 @@ import { validateEmail } from '../utils/validators';
 import { toast } from 'react-toastify';
 import HodPasswordResetModal from '../components/HodPasswordResetModal';
 import RemarksModal from '../components/RemarksModal';
+import PrincipalSidebar from '../components/PrincipalSidebar';
 import config from '../config';
 
 const BRANCH_OPTIONS = {
@@ -84,6 +85,8 @@ const PrincipalDashboard = () => {
   const [cclRemarks, setCclRemarks] = useState('');
   const [refreshTrigger, setRefreshTrigger] = useState(false);
   const [shouldRedirect, setShouldRedirect] = useState(false);
+  const [activeSection, setActiveSection] = useState('dashboard');
+  const [showLeaveDetailsModal, setShowLeaveDetailsModal] = useState(false);
 
   const navigate = useNavigate();
   const campus = localStorage.getItem('campus');
@@ -549,6 +552,453 @@ const PrincipalDashboard = () => {
     }
   };
 
+  const renderContent = () => {
+    switch (activeSection) {
+      case 'dashboard':
+        return (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold text-primary mb-6">Dashboard Overview</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {/* Stats Cards */}
+              <div className="bg-secondary p-6 rounded-neumorphic shadow-outerRaised">
+                <h3 className="text-lg font-semibold text-primary mb-2">Total HODs</h3>
+                <p className="text-3xl font-bold">{hods.length}</p>
+              </div>
+              <div className="bg-secondary p-6 rounded-neumorphic shadow-outerRaised">
+                <h3 className="text-lg font-semibold text-primary mb-2">Total Employees</h3>
+                <p className="text-3xl font-bold">{employees.length}</p>
+              </div>
+              <div className="bg-secondary p-6 rounded-neumorphic shadow-outerRaised">
+                <h3 className="text-lg font-semibold text-primary mb-2">Pending Leaves</h3>
+                <p className="text-3xl font-bold">
+                  {forwardedLeaves.filter(leave => leave.status === 'pending').length}
+                </p>
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'hods':
+        return (
+          <div className="p-6">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-primary">HOD Management</h2>
+              <button
+                onClick={() => setShowCreateModal(true)}
+                className="bg-primary text-white px-4 py-2 rounded-neumorphic
+                         hover:shadow-innerSoft transition-all duration-300"
+              >
+                Create HOD
+              </button>
+            </div>
+            <div className="bg-secondary rounded-neumorphic shadow-outerRaised p-6">
+              <div className="overflow-x-auto">
+                <table className="min-w-full bg-white rounded-lg overflow-hidden">
+                  <thead className="bg-gray-100">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Name</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Email</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Department</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Phone</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Status</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {hods.map((hod) => (
+                      <tr key={hod._id} className="hover:bg-gray-50">
+                        <td className="px-4 py-3 text-sm text-gray-900">{hod.name}</td>
+                        <td className="px-4 py-3 text-sm text-gray-900">{hod.email}</td>
+                        <td className="px-4 py-3 text-sm text-gray-900">
+                          <div className="group relative">
+                            <span>{hod.department?.code || hod.branchCode}</span>
+                            <div className="hidden group-hover:block absolute z-10 bg-black text-white text-xs rounded py-1 px-2 left-0 -bottom-8">
+                              {hod.department?.name || BRANCH_NAMES[hod.branchCode] || hod.branchCode}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-900">{hod.phoneNumber || 'N/A'}</td>
+                        <td className="px-4 py-3 text-sm">
+                          <span className={`px-2 py-1 rounded-full text-xs font-semibold
+                            ${(hod.status === 'active' || hod.isActive)
+                              ? 'bg-green-100 text-green-800' 
+                              : 'bg-red-100 text-red-800'}`}
+                          >
+                            {hod.status || (hod.isActive ? 'active' : 'inactive')}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-sm space-x-2">
+                          <button
+                            onClick={() => handleEditClick(hod)}
+                            className="bg-blue-500 text-white px-3 py-1 rounded-md text-xs hover:bg-blue-600 transition-colors"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleResetPassword(hod)}
+                            className="bg-orange-500 text-white px-3 py-1 rounded-md text-xs hover:bg-orange-600 transition-colors"
+                          >
+                            Reset Password
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'employees':
+        return (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold text-primary mb-6">Employee Management</h2>
+            <div className="bg-secondary rounded-neumorphic shadow-outerRaised p-6">
+              {/* Employee filters */}
+              <div className="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                <input
+                  type="text"
+                  placeholder="Search by name, email, or ID..."
+                  value={employeeFilters.search}
+                  onChange={(e) => setEmployeeFilters({ ...employeeFilters, search: e.target.value })}
+                  className="p-2 rounded-neumorphic shadow-innerSoft bg-background"
+                />
+                <select
+                  value={employeeFilters.department}
+                  onChange={(e) => setEmployeeFilters({ ...employeeFilters, department: e.target.value })}
+                  className="p-2 rounded-neumorphic shadow-innerSoft bg-background"
+                >
+                  <option value="">All Departments</option>
+                  {Object.entries(BRANCH_NAMES).map(([code, name]) => (
+                    <option key={code} value={code}>{name}</option>
+                  ))}
+                </select>
+                <select
+                  value={employeeFilters.status}
+                  onChange={(e) => setEmployeeFilters({ ...employeeFilters, status: e.target.value })}
+                  className="p-2 rounded-neumorphic shadow-innerSoft bg-background"
+                >
+                  <option value="">All Status</option>
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                </select>
+              </div>
+
+              {/* Employee list */}
+              <div className="overflow-x-auto">
+                <table className="min-w-full bg-white rounded-lg overflow-hidden">
+                  <thead className="bg-gray-100">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Employee ID</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Name</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Email</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Department</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Designation</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Phone</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {employees.map((employee) => (
+                      <tr key={employee._id} className="hover:bg-gray-50">
+                        <td className="px-4 py-3 text-sm text-gray-900">{employee.employeeId}</td>
+                        <td className="px-4 py-3 text-sm text-gray-900">{employee.name}</td>
+                        <td className="px-4 py-3 text-sm text-gray-900">{employee.email}</td>
+                        <td className="px-4 py-3 text-sm text-gray-900">
+                          <div className="group relative">
+                            <span>{employee.branchCode || employee.department}</span>
+                            <div className="hidden group-hover:block absolute z-10 bg-black text-white text-xs rounded py-1 px-2 left-0 -bottom-8">
+                              {BRANCH_NAMES[employee.branchCode] || BRANCH_NAMES[employee.department] || employee.department}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-900">
+                          {employee.designation}
+                          {employee.role === 'faculty' && <span className="ml-1 text-xs text-blue-600">(Faculty)</span>}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-900">{employee.phoneNumber || 'N/A'}</td>
+                        <td className="px-4 py-3 text-sm">
+                          <span className={`px-2 py-1 rounded-full text-xs font-semibold
+                            ${employee.status === 'active'
+                              ? 'bg-green-100 text-green-800' 
+                              : 'bg-red-100 text-red-800'}`}
+                          >
+                            {employee.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'leaves':
+        return (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold text-primary mb-6">Leave Requests</h2>
+            <div className="bg-secondary rounded-neumorphic shadow-outerRaised p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {forwardedLeaves.map((leave) => (
+                  <div 
+                    key={leave._id} 
+                    className="bg-background p-4 rounded-neumorphic shadow-innerSoft cursor-pointer hover:shadow-outerRaised transition-all duration-300"
+                    onClick={() => {
+                      setSelectedLeave(leave);
+                      setShowLeaveDetailsModal(true);
+                    }}
+                  >
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h3 className="text-lg font-semibold text-primary">
+                          {leave.employee?.name || leave.employeeName || 'Unknown Employee'}
+                        </h3>
+                        <p className="text-gray-600">ID: {leave.employee?.employeeId || leave.employeeEmployeeId || 'N/A'}</p>
+                        <p className="text-gray-600">
+                          {new Date(leave.startDate).toLocaleDateString()} - {new Date(leave.endDate).toLocaleDateString()}
+                        </p>
+                        <p className="text-gray-600">
+                          Type: {leave.type ? leave.type.charAt(0).toUpperCase() + leave.type.slice(1) : 
+                                 leave.leaveType ? leave.leaveType.charAt(0).toUpperCase() + leave.leaveType.slice(1) : 'N/A'}
+                        </p>
+                        <span className={`inline-block mt-2 px-2 py-1 rounded-full text-xs font-semibold
+                          ${leave.status === 'Approved' ? 'bg-green-100 text-green-800' :
+                            leave.status === 'Rejected' ? 'bg-red-100 text-red-800' :
+                            leave.status === 'Forwarded by HOD' ? 'bg-blue-100 text-blue-800' :
+                            'bg-yellow-100 text-yellow-800'}`}
+                        >
+                          {leave.status || 'N/A'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Leave Details Modal */}
+            {showLeaveDetailsModal && selectedLeave && (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+                  <div className="flex justify-between items-start mb-4">
+                    <h3 className="text-xl font-bold text-primary">Leave Request Details</h3>
+                    <button
+                      onClick={() => {
+                        setShowLeaveDetailsModal(false);
+                        setSelectedLeave(null);
+                      }}
+                      className="text-gray-500 hover:text-gray-700"
+                    >
+                      ✕
+                    </button>
+                  </div>
+
+                  <div className="space-y-4">
+                    {/* Employee Information */}
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h4 className="font-semibold text-gray-900 mb-2">Employee Information</h4>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-sm text-gray-600">Name</p>
+                          <p className="font-medium">{selectedLeave.employee?.name || selectedLeave.employeeName}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-600">Employee ID</p>
+                          <p className="font-medium">{selectedLeave.employee?.employeeId || selectedLeave.employeeEmployeeId}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-600">Email</p>
+                          <p className="font-medium">{selectedLeave.employee?.email || selectedLeave.employeeEmail}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-600">Department</p>
+                          <p className="font-medium">{selectedLeave.employee?.department?.name || selectedLeave.employeeDepartment}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Leave Details */}
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h4 className="font-semibold text-gray-900 mb-2">Leave Details</h4>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-sm text-gray-600">Leave Type</p>
+                          <p className="font-medium">
+                            {selectedLeave.type ? selectedLeave.type.charAt(0).toUpperCase() + selectedLeave.type.slice(1) : 
+                             selectedLeave.leaveType ? selectedLeave.leaveType.charAt(0).toUpperCase() + selectedLeave.leaveType.slice(1) : 'N/A'}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-600">Duration</p>
+                          <p className="font-medium">
+                            {new Date(selectedLeave.startDate).toLocaleDateString()} to {new Date(selectedLeave.endDate).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-600">Applied On</p>
+                          <p className="font-medium">
+                            {selectedLeave.appliedOn ? new Date(selectedLeave.appliedOn).toLocaleDateString() : 'N/A'}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-600">Status</p>
+                          <span className={`inline-block px-2 py-1 rounded-full text-xs font-semibold
+                            ${selectedLeave.status === 'Approved' ? 'bg-green-100 text-green-800' :
+                              selectedLeave.status === 'Rejected' ? 'bg-red-100 text-red-800' :
+                              selectedLeave.status === 'Forwarded by HOD' ? 'bg-blue-100 text-blue-800' :
+                              'bg-yellow-100 text-yellow-800'}`}
+                          >
+                            {selectedLeave.status || 'N/A'}
+                          </span>
+                        </div>
+                        {selectedLeave.isHalfDay && (
+                          <div className="col-span-2">
+                            <p className="text-sm text-gray-600">Half Day Leave</p>
+                          </div>
+                        )}
+                        <div className="col-span-2">
+                          <p className="text-sm text-gray-600">Reason</p>
+                          <p className="font-medium">{selectedLeave.reason || 'No reason provided'}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Remarks */}
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h4 className="font-semibold text-gray-900 mb-2">Remarks</h4>
+                      <div className="space-y-2">
+                        {selectedLeave.hodRemarks && (
+                          <div>
+                            <p className="text-sm text-gray-600">HOD Remarks</p>
+                            <p className="font-medium">{selectedLeave.hodRemarks}</p>
+                          </div>
+                        )}
+                        {selectedLeave.principalRemarks && (
+                          <div>
+                            <p className="text-sm text-gray-600">Principal Remarks</p>
+                            <p className="font-medium">{selectedLeave.principalRemarks}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Alternate Schedule */}
+                    {selectedLeave.alternateSchedule && selectedLeave.alternateSchedule.length > 0 && (
+                      <div className="bg-gray-50 p-4 rounded-lg">
+                        <h4 className="font-semibold text-gray-900 mb-2">Alternate Schedule</h4>
+                        <div className="space-y-4">
+                          {selectedLeave.alternateSchedule.map((schedule, index) => (
+                            <div key={index} className="bg-white p-3 rounded-md">
+                              <p className="font-medium mb-2">
+                                Date: {schedule.date ? new Date(schedule.date).toLocaleDateString() : 'N/A'}
+                              </p>
+                              {schedule.periods && schedule.periods.length > 0 ? (
+                                <div className="space-y-2">
+                                  {schedule.periods.map((period, pIndex) => (
+                                    <div key={pIndex} className="bg-gray-50 p-2 rounded">
+                                      <div className="grid grid-cols-2 gap-2">
+                                        <div>
+                                          <span className="text-sm text-gray-600">Period:</span>{' '}
+                                          <span className="font-medium">{period.periodNumber || 'N/A'}</span>
+                                        </div>
+                                        <div>
+                                          <span className="text-sm text-gray-600">Class:</span>{' '}
+                                          <span className="font-medium">{period.assignedClass || 'N/A'}</span>
+                                        </div>
+                                        <div className="col-span-2">
+                                          <span className="text-sm text-gray-600">Substitute Faculty:</span>{' '}
+                                          <span className="font-medium">{period.substituteFaculty || 'N/A'}</span>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <p className="text-gray-500 italic">No periods assigned for this day</p>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Action Buttons */}
+                    {selectedLeave.status === 'Forwarded by HOD' && (
+                      <div className="flex justify-end space-x-4 mt-6">
+                        <button
+                          onClick={() => {
+                            setShowLeaveDetailsModal(false);
+                            handleAction(selectedLeave._id, 'approve');
+                          }}
+                          className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition-colors"
+                        >
+                          Approve
+                        </button>
+                        <button
+                          onClick={() => {
+                            setShowLeaveDetailsModal(false);
+                            handleAction(selectedLeave._id, 'reject');
+                          }}
+                          className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition-colors"
+                        >
+                          Reject
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        );
+
+      case 'ccl-work':
+        return (
+          <div className="p-6">
+            <h2 className="text-2xl font-bold text-primary mb-6">CCL Work Requests</h2>
+            <div className="bg-secondary rounded-neumorphic shadow-outerRaised p-6">
+              <div className="grid grid-cols-1 gap-6">
+                {cclWorkRequests.map((work) => (
+                  <div key={work._id} className="bg-background p-4 rounded-neumorphic shadow-innerSoft">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h3 className="text-lg font-semibold text-primary">{work.employee.name}</h3>
+                        <p className="text-gray-600">{work.employee.department?.name}</p>
+                        <p className="text-gray-600">Type: {work.type}</p>
+                        <p className="text-gray-600">Description: {work.description}</p>
+                      </div>
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => handleCCLWorkAction(work._id, 'approve')}
+                          className="bg-green-500 text-white px-4 py-2 rounded-neumorphic
+                                   hover:shadow-innerSoft transition-all duration-300"
+                        >
+                          Approve
+                        </button>
+                        <button
+                          onClick={() => handleCCLWorkAction(work._id, 'reject')}
+                          className="bg-red-500 text-white px-4 py-2 rounded-neumorphic
+                                   hover:shadow-innerSoft transition-all duration-300"
+                        >
+                          Reject
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        );
+
+      default:
+        return null;
+    }
+  };
+
   if (shouldRedirect) {
     return null;
   }
@@ -566,658 +1016,278 @@ const PrincipalDashboard = () => {
     );
   }
 
-  // Get available branches for this campus type
-  const campusType = campus.charAt(0).toUpperCase() + campus.slice(1);
-  const availableBranches = BRANCH_OPTIONS[campusType] || [];
-
   return (
-    <div className="min-h-screen bg-background p-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-primary">
-              {campusType} Campus Dashboard
-            </h1>
-            <p className="text-gray-600 mt-2">Manage your campus branches and HODs</p>
-          </div>
-          <button
-            onClick={handleLogout}
-            className="bg-red-500 text-white px-4 py-2 rounded-neumorphic
-                     hover:shadow-innerSoft transition-all duration-300"
-          >
-            Logout
-          </button>
-        </div>
-
+    <div className="min-h-screen bg-background">
+      <PrincipalSidebar
+        activeSection={activeSection}
+        onSectionChange={setActiveSection}
+      />
+      <div className="lg:ml-64 min-h-screen">
         {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-4">
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg m-4">
             {error}
           </div>
         )}
-
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="bg-primary text-white px-6 py-3 rounded-neumorphic
-                   hover:shadow-innerSoft transition-all duration-300 mb-8"
-        >
-          Create New HOD
-        </button>
-
-        <div className="mt-8">
-          <h2 className="text-2xl font-bold text-primary mb-6">Department HODs</h2>
-          <div className="bg-secondary p-6 rounded-neumorphic shadow-outerRaised overflow-x-auto">
-            <table className="min-w-full bg-white rounded-lg overflow-hidden">
-              <thead className="bg-gray-100">
-                <tr>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Name</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Email</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Department</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Phone</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Status</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {hods.map((hod) => (
-                  <tr key={hod._id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 text-sm text-gray-900">{hod.name}</td>
-                    <td className="px-4 py-3 text-sm text-gray-900">{hod.email}</td>
-                    <td className="px-4 py-3 text-sm text-gray-900">
-                      <div className="group relative">
-                        <span>{hod.department?.code || hod.branchCode}</span>
-                        <div className="hidden group-hover:block absolute z-10 bg-black text-white text-xs rounded py-1 px-2 left-0 -bottom-8">
-                          {hod.department?.name || BRANCH_NAMES[hod.branchCode] || hod.branchCode}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-900">{hod.phoneNumber || 'N/A'}</td>
-                    <td className="px-4 py-3 text-sm">
-                      <span className={`px-2 py-1 rounded-full text-xs font-semibold
-                        ${(hod.status === 'active' || hod.isActive)
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-red-100 text-red-800'}`}
-                      >
-                        {hod.status || (hod.isActive ? 'active' : 'inactive')}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-sm space-x-2">
-                      <button
-                        onClick={() => handleEditClick(hod)}
-                        className="bg-blue-500 text-white px-3 py-1 rounded-md text-xs hover:bg-blue-600 transition-colors"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleResetPassword(hod)}
-                        className="bg-orange-500 text-white px-3 py-1 rounded-md text-xs hover:bg-orange-600 transition-colors"
-                      >
-                        Reset Password
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+        <div className="p-4 lg:p-6">
+          {renderContent()}
         </div>
+      </div>
 
-        {/* Employees Section */}
-        <div className="mt-12">
-          <h2 className="text-2xl font-bold text-primary mb-6">Campus Staff</h2>
-          
-          {/* Filters */}
-          <div className="bg-white p-4 rounded-lg shadow mb-4 flex gap-4">
-            <input
-              type="text"
-              placeholder="Search by name, email, or ID..."
-              value={employeeFilters.search}
-              onChange={(e) => setEmployeeFilters(prev => ({ ...prev, search: e.target.value }))}
-              className="flex-1 p-2 border rounded"
-            />
-            <select
-              value={employeeFilters.department}
-              onChange={(e) => setEmployeeFilters(prev => ({ ...prev, department: e.target.value }))}
-              className="p-2 border rounded"
-            >
-              <option value="">All Departments</option>
-              {availableBranches.map(branch => (
-                <option key={branch} value={branch}>{branch}</option>
-              ))}
-            </select>
-            <select
-              value={employeeFilters.status}
-              onChange={(e) => setEmployeeFilters(prev => ({ ...prev, status: e.target.value }))}
-              className="p-2 border rounded"
-            >
-              <option value="">All Status</option>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-            </select>
-          </div>
-
-          {/* Employees Table */}
-          <div className="bg-secondary p-6 rounded-neumorphic shadow-outerRaised overflow-x-auto">
-            <table className="min-w-full bg-white rounded-lg overflow-hidden">
-              <thead className="bg-gray-100">
-                <tr>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Employee ID</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Name</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Email</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Department</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Designation</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Phone</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {employees.map((employee) => (
-                  <tr key={employee._id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 text-sm text-gray-900">{employee.employeeId}</td>
-                    <td className="px-4 py-3 text-sm text-gray-900">{employee.name}</td>
-                    <td className="px-4 py-3 text-sm text-gray-900">{employee.email}</td>
-                    <td className="px-4 py-3 text-sm text-gray-900">
-                      <div className="group relative">
-                        <span>{employee.branchCode || employee.department}</span>
-                        <div className="hidden group-hover:block absolute z-10 bg-black text-white text-xs rounded py-1 px-2 left-0 -bottom-8">
-                          {BRANCH_NAMES[employee.branchCode] || BRANCH_NAMES[employee.department] || employee.department}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-900">
-                      {employee.designation}
-                      {employee.role === 'faculty' && <span className="ml-1 text-xs text-blue-600">(Faculty)</span>}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-900">{employee.phoneNumber || 'N/A'}</td>
-                    <td className="px-4 py-3 text-sm">
-                      <span className={`px-2 py-1 rounded-full text-xs font-semibold
-                        ${employee.status === 'active'
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-red-100 text-red-800'}`}
-                      >
-                        {employee.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* Forwarded Leave Requests Section */}
-        <div className="mt-12">
-          <h2 className="text-2xl font-bold text-primary mb-6">Forwarded Leave Requests</h2>
-          <div className="space-y-6">
-            {error && (
-              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg">
-                {error}
-              </div>
-            )}
-            {forwardedLeaves.length > 0 ? (
-              forwardedLeaves.map((request) => (
-                <div
-                  key={request._id}
-                  className="bg-secondary p-6 rounded-neumorphic shadow-outerRaised"
-                >
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <h3 className="text-xl font-semibold text-primary mb-2">
-                        {request.employeeName || 'Unknown Employee'}
-                      </h3>
-                      <p className="text-gray-600">Employee ID: {request.employeeEmployeeId || 'N/A'}</p>
-                      <p className="text-gray-600">Email: {request.employeeEmail || 'N/A'}</p>
-                      <p className="text-gray-600">Department: {request.employeeDepartment || 'N/A'}</p>
-                      <p className="text-gray-600">
-                        Leave Type: {request.leaveType ? request.leaveType.charAt(0).toUpperCase() + request.leaveType.slice(1) : 'N/A'}
-                      </p>
-                      <p className="text-gray-600">
-                        Duration: {request.startDate && request.endDate ? 
-                          `${new Date(request.startDate).toLocaleDateString()} to ${new Date(request.endDate).toLocaleDateString()}` 
-                          : 'N/A'}
-                      </p>
-                      <p className="text-gray-600">
-                        Applied On: {request.appliedOn ? new Date(request.appliedOn).toLocaleDateString() : 'N/A'}
-                      </p>
-                      <p className="text-gray-600">
-                        Status: <span className={`font-semibold ${
-                          request.status === 'Approved' ? 'text-green-600' :
-                          request.status === 'Rejected' ? 'text-red-600' :
-                          request.status === 'Forwarded by HOD' ? 'text-blue-600' :
-                          'text-yellow-600'
-                        }`}>{request.status || 'N/A'}</span>
-                      </p>
-                      {request.isHalfDay && (
-                        <p className="text-gray-600">
-                          <span className="font-semibold">Half Day Leave</span>
-                        </p>
-                      )}
-                      {request.reason && (
-                        <p className="text-gray-600 mt-2">
-                          <span className="font-semibold">Reason:</span> {request.reason}
-                        </p>
-                      )}
-                      {request.hodRemarks && (
-                        <p className="text-gray-600 mt-2">
-                          <span className="font-semibold">HOD Remarks:</span> {request.hodRemarks}
-                        </p>
-                      )}
-                      {request.principalRemarks && (
-                        <p className="text-gray-600 mt-2">
-                          <span className="font-semibold">Your Remarks:</span> {request.principalRemarks}
-                        </p>
-                      )}
-                    </div>
-                    <div className="flex flex-col justify-between">
-                      {request.status === 'Forwarded by HOD' && (
-                        <div className="space-y-2">
-                          <button
-                            onClick={() => handleAction(request._id, 'approve')}
-                            className="w-full bg-green-500 text-white px-4 py-2 rounded-neumorphic hover:shadow-innerSoft transition-all"
-                          >
-                            Approve
-                          </button>
-                          <button
-                            onClick={() => handleAction(request._id, 'reject')}
-                            className="w-full bg-red-500 text-white px-4 py-2 rounded-neumorphic hover:shadow-innerSoft transition-all"
-                          >
-                            Reject
-                          </button>
-                        </div>
-                      )}
-                      {request.alternateSchedule && request.alternateSchedule.length > 0 && (
-                        <div className="mt-4">
-                          <h4 className="text-lg font-semibold mb-2">Alternate Schedule</h4>
-                          <div className="space-y-4">
-                            {request.alternateSchedule.map((schedule, index) => (
-                              <div key={index} className="bg-gray-50 p-4 rounded-lg">
-                                <div className="mb-2">
-                                  <span className="font-medium">Date:</span>{' '}
-                                  {schedule.date ? new Date(schedule.date).toLocaleDateString() : 'N/A'}
-                                </div>
-                                {schedule.periods && schedule.periods.length > 0 ? (
-                                  <div className="space-y-2">
-                                    {schedule.periods.map((period, pIndex) => (
-                                      <div key={pIndex} className="bg-white p-3 rounded-md">
-                                        <div className="grid grid-cols-2 gap-2">
-                                          <div>
-                                            <span className="font-medium">Period:</span> {period.periodNumber || 'N/A'}
-                                          </div>
-                                          <div>
-                                            <span className="font-medium">Class:</span> {period.assignedClass || 'N/A'}
-                                          </div>
-                                          <div className="col-span-2">
-                                            <span className="font-medium">Substitute Faculty:</span> {period.substituteFaculty || 'N/A'}
-                                          </div>
-                                        </div>
-                                      </div>
-                                    ))}
-                                  </div>
-                                ) : (
-                                  <p className="text-gray-500 italic">No periods assigned for this day</p>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
+      {/* Create HOD Modal */}
+      {showCreateModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-secondary rounded-neumorphic shadow-outerRaised p-4 lg:p-8 max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <h2 className="text-xl lg:text-2xl font-bold text-primary mb-6">
+              Create New HOD
+            </h2>
+            
+            <form onSubmit={handleCreateHOD}>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-gray-700 text-sm font-bold mb-2">
+                    Name
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.name}
+                    onChange={(e) => setFormData({...formData, name: e.target.value})}
+                    className="w-full p-2 lg:p-3 rounded-neumorphic shadow-innerSoft bg-background
+                             focus:outline-none focus:ring-2 focus:ring-primary"
+                    required
+                  />
                 </div>
-              ))
-            ) : (
-              <div className="text-center text-gray-600 py-8">
-                No forwarded leave requests found
-              </div>
-            )}
-          </div>
-        </div>
 
-        {/* CCL Work Requests Section */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">CCL Work Requests</h2>
-          <div className="space-y-4">
-            {cclWorkRequests && cclWorkRequests.length > 0 ? (
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employee</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Assigned To</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reason</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">HOD Remarks</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Principal Remarks</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {cclWorkRequests.map((request) => (
-                      <tr key={request._id}>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900">{request.employeeName}</div>
-                          <div className="text-sm text-gray-500">{request.employeeEmail}</div>
-                          <div className="text-sm text-gray-500">{request.employeeDepartment}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">
-                            {new Date(request.date).toLocaleDateString()}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">{request.assignedTo}</div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="text-sm text-gray-900">{request.reason}</div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="text-sm text-gray-900">{request.hodRemarks}</div>
-                          {request.hodApprovalDate && (
-                            <div className="text-xs text-gray-500">
-                              {new Date(request.hodApprovalDate).toLocaleDateString()}
-                            </div>
-                          )}
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="text-sm text-gray-900">{request.principalRemarks}</div>
-                          {request.principalApprovalDate && (
-                            <div className="text-xs text-gray-500">
-                              {new Date(request.principalApprovalDate).toLocaleDateString()}
-                            </div>
-                          )}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                            ${request.status === 'Forwarded to Principal' ? 'bg-blue-100 text-blue-800' : 
-                              request.status === 'Approved' ? 'bg-green-100 text-green-800' :
-                              'bg-red-100 text-red-800'}`}>
-                            {request.status}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          {request.status === 'Forwarded to Principal' && (
-                            <div className="flex space-x-2">
-                              <button
-                                onClick={() => {
-                                  setSelectedCCLWork(request);
-                                  setShowCCLRemarksModal(true);
-                                }}
-                                className="text-blue-600 hover:text-blue-900"
-                              >
-                                Review Request
-                              </button>
-                            </div>
-                          )}
-                        </td>
-                      </tr>
+                <div>
+                  <label className="block text-gray-700 text-sm font-bold mb-2">
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({...formData, email: e.target.value})}
+                    className="w-full p-2 lg:p-3 rounded-neumorphic shadow-innerSoft bg-background
+                             focus:outline-none focus:ring-2 focus:ring-primary"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-gray-700 text-sm font-bold mb-2">
+                    HOD ID (optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.HODId}
+                    onChange={(e) => setFormData({...formData, HODId: e.target.value})}
+                    className="w-full p-2 lg:p-3 rounded-neumorphic shadow-innerSoft bg-background
+                             focus:outline-none focus:ring-2 focus:ring-primary"
+                    placeholder="Leave empty to use email as ID"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-gray-700 text-sm font-bold mb-2">
+                    Password
+                  </label>
+                  <input
+                    type="password"
+                    value={formData.password}
+                    onChange={(e) => setFormData({...formData, password: e.target.value})}
+                    className="w-full p-2 lg:p-3 rounded-neumorphic shadow-innerSoft bg-background
+                             focus:outline-none focus:ring-2 focus:ring-primary"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-gray-700 text-sm font-bold mb-2">
+                    Branch
+                  </label>
+                  <select
+                    value={formData.branchCode}
+                    onChange={(e) => setFormData({...formData, branchCode: e.target.value})}
+                    className="w-full p-2 lg:p-3 rounded-neumorphic shadow-innerSoft bg-background
+                             focus:outline-none focus:ring-2 focus:ring-primary"
+                    required
+                  >
+                    <option value="">Select a branch</option>
+                    {Object.keys(BRANCH_NAMES).map((branch) => (
+                      <option key={branch} value={branch}>
+                        {BRANCH_NAMES[branch]}
+                      </option>
                     ))}
-                  </tbody>
-                </table>
+                  </select>
+                </div>
               </div>
-            ) : (
-              <div className="text-center text-gray-600 py-8">
-                No pending CCL work requests
-              </div>
-            )}
-          </div>
-        </div>
 
-        {/* Create HOD Modal */}
-        {showCreateModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-            <div className="bg-secondary rounded-neumorphic shadow-outerRaised p-8 max-w-md w-full">
-              <h2 className="text-2xl font-bold text-primary mb-6">
-                Create New HOD
-              </h2>
-              
-              <form onSubmit={handleCreateHOD}>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-gray-700 text-sm font-bold mb-2">
-                      Name
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.name}
-                      onChange={(e) => setFormData({...formData, name: e.target.value})}
-                      className="w-full p-3 rounded-neumorphic shadow-innerSoft bg-background
-                               focus:outline-none focus:ring-2 focus:ring-primary"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-gray-700 text-sm font-bold mb-2">
-                      Email
-                    </label>
-                    <input
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => setFormData({...formData, email: e.target.value})}
-                      className="w-full p-3 rounded-neumorphic shadow-innerSoft bg-background
-                               focus:outline-none focus:ring-2 focus:ring-primary"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-gray-700 text-sm font-bold mb-2">
-                      HOD ID (optional)
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.HODId}
-                      onChange={(e) => setFormData({...formData, HODId: e.target.value})}
-                      className="w-full p-3 rounded-neumorphic shadow-innerSoft bg-background
-                               focus:outline-none focus:ring-2 focus:ring-primary"
-                      placeholder="Leave empty to use email as ID"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-gray-700 text-sm font-bold mb-2">
-                      Password
-                    </label>
-                    <input
-                      type="password"
-                      value={formData.password}
-                      onChange={(e) => setFormData({...formData, password: e.target.value})}
-                      className="w-full p-3 rounded-neumorphic shadow-innerSoft bg-background
-                               focus:outline-none focus:ring-2 focus:ring-primary"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-gray-700 text-sm font-bold mb-2">
-                      Branch
-                    </label>
-                    <select
-                      value={formData.branchCode}
-                      onChange={(e) => setFormData({...formData, branchCode: e.target.value})}
-                      className="w-full p-3 rounded-neumorphic shadow-innerSoft bg-background
-                               focus:outline-none focus:ring-2 focus:ring-primary"
-                      required
-                    >
-                      <option value="">Select a branch</option>
-                      {availableBranches.map((branch) => (
-                        <option key={branch} value={branch}>
-                          {branch}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                <div className="flex justify-end space-x-4 mt-6">
-                  <button
-                    type="button"
-                    onClick={() => setShowCreateModal(false)}
-                    className="bg-gray-500 text-white px-4 py-2 rounded-neumorphic
-                             hover:shadow-innerSoft transition-all duration-300"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="bg-primary text-white px-4 py-2 rounded-neumorphic
-                             hover:shadow-innerSoft transition-all duration-300"
-                  >
-                    Create
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
-
-        {/* Edit HOD Modal */}
-        {showEditModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-lg p-6 max-w-md w-full">
-              <h3 className="text-xl font-bold mb-4">Edit HOD Details</h3>
-              <form onSubmit={handleEditSubmit}>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Name</label>
-                    <input
-                      type="text"
-                      value={editForm.name}
-                      onChange={(e) => setEditForm({...editForm, name: e.target.value})}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Email</label>
-                    <input
-                      type="email"
-                      value={editForm.email}
-                      onChange={(e) => setEditForm({...editForm, email: e.target.value})}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Phone Number</label>
-                    <input
-                      type="text"
-                      value={editForm.phoneNumber}
-                      onChange={(e) => setEditForm({...editForm, phoneNumber: e.target.value})}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Department Code</label>
-                    <input
-                      type="text"
-                      value={editForm.department}
-                      onChange={(e) => setEditForm({...editForm, department: e.target.value})}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Status</label>
-                    <select
-                      value={editForm.status}
-                      onChange={(e) => setEditForm({...editForm, status: e.target.value})}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
-                    >
-                      <option value="active">Active</option>
-                      <option value="inactive">Inactive</option>
-                    </select>
-                  </div>
-                </div>
-                <div className="mt-6 flex justify-end space-x-3">
-                  <button
-                    type="button"
-                    onClick={() => setShowEditModal(false)}
-                    className="bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="bg-primary text-white px-4 py-2 rounded-md hover:bg-primary-dark"
-                  >
-                    Save Changes
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
-
-        {/* Password Reset Modal */}
-        <HodPasswordResetModal
-          show={showPasswordResetModal}
-          onClose={() => {
-            setShowPasswordResetModal(false);
-            setSelectedHod(null);
-          }}
-          hod={selectedHod}
-          token={token}
-          loading={loading}
-          setLoading={setLoading}
-        />
-
-        {/* Remarks Modal */}
-        <RemarksModal
-          show={showRemarksModal}
-          onClose={() => {
-            setShowRemarksModal(false);
-            setSelectedAction(null);
-            setSelectedRequestId(null);
-          }}
-          onSubmit={handleRemarksSubmit}
-          action={selectedAction}
-        />
-
-        {/* CCL Work Request Remarks Modal */}
-        {showCCLRemarksModal && selectedCCLWork && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                Review CCL Work Request
-              </h3>
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Remarks
-                </label>
-                <textarea
-                  value={cclRemarks}
-                  onChange={(e) => setCclRemarks(e.target.value)}
-                  rows="3"
-                  className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                  placeholder="Enter your remarks..."
-                />
-              </div>
-              <div className="flex justify-end space-x-4">
+              <div className="flex justify-end space-x-4 mt-6">
                 <button
-                  onClick={() => {
-                    setSelectedCCLWork(null);
-                    setCclRemarks('');
-                    setShowCCLRemarksModal(false);
-                  }}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                  type="button"
+                  onClick={() => setShowCreateModal(false)}
+                  className="bg-gray-500 text-white px-3 lg:px-4 py-2 rounded-neumorphic
+                           hover:shadow-innerSoft transition-all duration-300"
                 >
                   Cancel
                 </button>
                 <button
-                  onClick={() => handleCCLWorkAction('Approved')}
-                  className="px-4 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-md hover:bg-green-700"
+                  type="submit"
+                  className="bg-primary text-white px-3 lg:px-4 py-2 rounded-neumorphic
+                           hover:shadow-innerSoft transition-all duration-300"
                 >
-                  Approve
-                </button>
-                <button
-                  onClick={() => handleCCLWorkAction('Rejected')}
-                  className="px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700"
-                >
-                  Reject
+                  Create
                 </button>
               </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit HOD Modal */}
+      {showEditModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg p-4 lg:p-6 max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <h3 className="text-lg lg:text-xl font-bold mb-4">Edit HOD Details</h3>
+            <form onSubmit={handleEditSubmit}>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Name</label>
+                  <input
+                    type="text"
+                    value={editForm.name}
+                    onChange={(e) => setEditForm({...editForm, name: e.target.value})}
+                    className="mt-1 block w-full p-2 lg:p-3 rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Email</label>
+                  <input
+                    type="email"
+                    value={editForm.email}
+                    onChange={(e) => setEditForm({...editForm, email: e.target.value})}
+                    className="mt-1 block w-full p-2 lg:p-3 rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Phone Number</label>
+                  <input
+                    type="text"
+                    value={editForm.phoneNumber}
+                    onChange={(e) => setEditForm({...editForm, phoneNumber: e.target.value})}
+                    className="mt-1 block w-full p-2 lg:p-3 rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Department Code</label>
+                  <input
+                    type="text"
+                    value={editForm.department}
+                    onChange={(e) => setEditForm({...editForm, department: e.target.value})}
+                    className="mt-1 block w-full p-2 lg:p-3 rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Status</label>
+                  <select
+                    value={editForm.status}
+                    onChange={(e) => setEditForm({...editForm, status: e.target.value})}
+                    className="mt-1 block w-full p-2 lg:p-3 rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
+                  >
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                  </select>
+                </div>
+              </div>
+              <div className="mt-6 flex justify-end space-x-3">
+                <button
+                  type="button"
+                  onClick={() => setShowEditModal(false)}
+                  className="bg-gray-200 text-gray-700 px-3 lg:px-4 py-2 rounded-md hover:bg-gray-300"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="bg-primary text-white px-3 lg:px-4 py-2 rounded-md hover:bg-primary-dark"
+                >
+                  Save Changes
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Password Reset Modal */}
+      <HodPasswordResetModal
+        show={showPasswordResetModal}
+        onClose={() => {
+          setShowPasswordResetModal(false);
+          setSelectedHod(null);
+        }}
+        hod={selectedHod}
+        token={token}
+        loading={loading}
+        setLoading={setLoading}
+      />
+
+      {/* Remarks Modal */}
+      <RemarksModal
+        show={showRemarksModal}
+        onClose={() => {
+          setShowRemarksModal(false);
+          setSelectedAction(null);
+          setSelectedRequestId(null);
+        }}
+        onSubmit={handleRemarksSubmit}
+        action={selectedAction}
+      />
+
+      {/* CCL Work Request Remarks Modal */}
+      {showCCLRemarksModal && selectedCCLWork && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-xl p-4 lg:p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              Review CCL Work Request
+            </h3>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Remarks
+              </label>
+              <textarea
+                value={cclRemarks}
+                onChange={(e) => setCclRemarks(e.target.value)}
+                rows="3"
+                className="w-full p-2 lg:p-3 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                placeholder="Enter your remarks..."
+              />
+            </div>
+            <div className="flex justify-end space-x-4">
+              <button
+                onClick={() => {
+                  setSelectedCCLWork(null);
+                  setCclRemarks('');
+                  setShowCCLRemarksModal(false);
+                }}
+                className="px-3 lg:px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleCCLWorkAction('Approved')}
+                className="px-3 lg:px-4 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-md hover:bg-green-700"
+              >
+                Approve
+              </button>
+              <button
+                onClick={() => handleCCLWorkAction('Rejected')}
+                className="px-3 lg:px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700"
+              >
+                Reject
+              </button>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };
