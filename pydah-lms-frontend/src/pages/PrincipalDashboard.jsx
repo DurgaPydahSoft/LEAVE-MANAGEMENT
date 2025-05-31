@@ -112,7 +112,7 @@ const PrincipalDashboard = () => {
   const fetchBranches = async () => {
     try {
       const response = await axios.get(
-        'http://localhost:5000/api/principal/hods',
+        `${API_BASE_URL}/principal/hods`,
         {
           headers: { Authorization: `Bearer ${token}` }
         }
@@ -321,7 +321,7 @@ const PrincipalDashboard = () => {
 
     try {
       await axios.post(
-        'http://localhost:5000/api/principal/hods',
+        `${API_BASE_URL}/principal/hods`,
         {
           name: formData.name,
           email: formData.email,
