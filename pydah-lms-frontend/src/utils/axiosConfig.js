@@ -6,9 +6,14 @@ const API_BASE_URL = config.API_BASE_URL;
 // Create axios instance with base URL
 const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 10000, // 10 seconds timeout
+  timeout: 60000, // Increased to 60 seconds
   headers: {
     'Content-Type': 'application/json'
+  },
+  // Add these options to handle CORS and credentials
+  withCredentials: true,
+  validateStatus: function (status) {
+    return status >= 200 && status < 500; // Accept all status codes less than 500
   }
 });
 
@@ -16,14 +21,14 @@ const axiosInstance = axios.create({
 axiosInstance.interceptors.request.use(
   (config) => {
     // Log request details in development
-    if (process.env.NODE_ENV === 'development') {
-      console.log('API Request:', {
-        url: config.url,
-        method: config.method,
-        data: config.data,
-        headers: config.headers
-      });
-    }
+    console.log('API Request:', {
+      url: config.url,
+      method: config.method,
+      data: config.data,
+      headers: config.headers,
+      baseURL: config.baseURL,
+      timeout: config.timeout
+    });
     return config;
   },
   (error) => {
@@ -36,32 +41,51 @@ axiosInstance.interceptors.request.use(
 axiosInstance.interceptors.response.use(
   (response) => {
     // Log response details in development
-    if (process.env.NODE_ENV === 'development') {
-      console.log('API Response:', {
-        status: response.status,
-        data: response.data,
-        headers: response.headers
-      });
-    }
+    console.log('API Response:', {
+      status: response.status,
+      data: response.data,
+      headers: response.headers
+    });
     return response;
   },
   (error) => {
     if (error.code === 'ERR_NETWORK') {
-      console.error('Network Error - Check if backend is running');
+      console.error('Network Error - Check if backend is running:', {
+        url: error.config?.url,
+        baseURL: error.config?.baseURL,
+        method: error.config?.method
+      });
+    } else if (error.code === 'ECONNABORTED') {
+      console.error('Request Timeout:', {
+        url: error.config?.url,
+        baseURL: error.config?.baseURL,
+        timeout: error.config?.timeout,
+        method: error.config?.method
+      });
     } else if (error.response) {
       // The request was made and the server responded with a status code
-      // that falls out of the range of 2xx
       console.error('Response Error:', {
         status: error.response.status,
         data: error.response.data,
-        headers: error.response.headers
+        headers: error.response.headers,
+        url: error.config?.url,
+        baseURL: error.config?.baseURL
       });
     } else if (error.request) {
       // The request was made but no response was received
-      console.error('No Response Error:', error.request);
+      console.error('No Response Error:', {
+        request: error.request,
+        url: error.config?.url,
+        baseURL: error.config?.baseURL,
+        method: error.config?.method
+      });
     } else {
       // Something happened in setting up the request that triggered an Error
-      console.error('Request Setup Error:', error.message);
+      console.error('Request Setup Error:', {
+        message: error.message,
+        url: error.config?.url,
+        baseURL: error.config?.baseURL
+      });
     }
     return Promise.reject(error);
   }
