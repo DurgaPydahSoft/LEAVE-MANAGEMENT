@@ -47,7 +47,7 @@ const LeaveApplicationForm = ({ onSubmit, onClose, employee, loading }) => {
     const fetchLeaveBalance = async () => {
       try {
         const token = localStorage.getItem('token');
-        const response = await fetch(`${API_BASE_URL}/api/employee/leave-balance`, {
+        const response = await fetch(`${API_BASE_URL}/employee/leave-balance`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (!response.ok) throw new Error('Failed to fetch leave balance');
@@ -71,7 +71,7 @@ const LeaveApplicationForm = ({ onSubmit, onClose, employee, loading }) => {
 
       try {
         const token = localStorage.getItem('token');
-        const response = await fetch(`${API_BASE_URL}/api/employee/faculty-list/${employee.campus}`, {
+        const response = await fetch(`${API_BASE_URL}/employee/faculty-list/${employee.campus}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (!response.ok) throw new Error('Failed to fetch faculty list');
