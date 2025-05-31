@@ -244,7 +244,7 @@ const LeaveApplicationForm = ({ onSubmit, onClose, employee, loading }) => {
       
       // Check availability for each assigned faculty
       for (const period of currentDaySchedule.periods) {
-        const response = await fetch(`${API_BASE_URL}/api/employee/check-faculty-availability`, {
+        const response = await fetch(`${API_BASE_URL}/employee/check-faculty-availability`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
