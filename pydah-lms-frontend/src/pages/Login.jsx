@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import 'animate.css';
+import config from '../config';
+
+const API_BASE_URL = config.API_BASE_URL;
 
 const Login = () => {
   const [customDepartment, setCustomDepartment] = useState("");
@@ -214,7 +217,7 @@ const Login = () => {
       console.log("Request body:", requestBody);
       
       const response = await fetch(
-        `http://localhost:5000/api/auth${endpoint}`,
+        `${API_BASE_URL}/api/auth${endpoint}`,
         {
           method: "POST",
           headers: { 

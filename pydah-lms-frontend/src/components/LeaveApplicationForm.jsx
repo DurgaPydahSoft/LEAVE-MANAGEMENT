@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
+import config from '../config';
+
+const API_BASE_URL = config.API_BASE_URL;
 
 const LEAVE_TYPES = [
   { code: 'CL', label: 'Casual Leave' },
@@ -44,7 +47,7 @@ const LeaveApplicationForm = ({ onSubmit, onClose, employee, loading }) => {
     const fetchLeaveBalance = async () => {
       try {
         const token = localStorage.getItem('token');
-        const response = await fetch('http://localhost:5000/api/employee/leave-balance', {
+        const response = await fetch(`${API_BASE_URL}/api/employee/leave-balance`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (!response.ok) throw new Error('Failed to fetch leave balance');
@@ -68,7 +71,7 @@ const LeaveApplicationForm = ({ onSubmit, onClose, employee, loading }) => {
 
       try {
         const token = localStorage.getItem('token');
-        const response = await fetch(`http://localhost:5000/api/employee/faculty-list/${employee.campus}`, {
+        const response = await fetch(`${API_BASE_URL}/api/employee/faculty-list/${employee.campus}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (!response.ok) throw new Error('Failed to fetch faculty list');
@@ -241,7 +244,7 @@ const LeaveApplicationForm = ({ onSubmit, onClose, employee, loading }) => {
       
       // Check availability for each assigned faculty
       for (const period of currentDaySchedule.periods) {
-        const response = await fetch('http://localhost:5000/api/employee/check-faculty-availability', {
+        const response = await fetch(`${API_BASE_URL}/api/employee/check-faculty-availability`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -392,7 +395,7 @@ const LeaveApplicationForm = ({ onSubmit, onClose, employee, loading }) => {
       // Debug log
       console.log('Submitting leave request with data:', formattedData);
 
-      const response = await fetch('http://localhost:5000/api/employee/leave-request', {
+      const response = await fetch(`${API_BASE_URL}/api/employee/leave-request`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

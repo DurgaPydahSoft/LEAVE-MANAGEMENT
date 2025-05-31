@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import config from '../config';
+
+const API_BASE_URL = config.API_BASE_URL;
 
 const PREDEFINED_CAMPUSES = [
   { name: 'engineering', displayName: 'PYDAH Engineering College' },
@@ -38,7 +41,7 @@ const SuperAdminDashboard = () => {
 
       console.log('Fetching campuses...');
       const response = await axios.get(
-        'http://localhost:5000/api/super-admin/campuses',
+        `${API_BASE_URL}/super-admin/campuses`,
         {
           headers: { Authorization: `Bearer ${token}` }
         }
@@ -75,7 +78,7 @@ const SuperAdminDashboard = () => {
       
       if (!existingCampus) {
         const campusResponse = await axios.post(
-          'http://localhost:5000/api/super-admin/campuses',
+          `${API_BASE_URL}/super-admin/campuses`,
           {
             name: selectedCampus.name,
             displayName: selectedCampus.displayName
@@ -94,7 +97,7 @@ const SuperAdminDashboard = () => {
 
       // Then create the principal
       const principalResponse = await axios.post(
-        'http://localhost:5000/api/super-admin/principals',
+        `${API_BASE_URL}/super-admin/principals`,
         {
           name: formData.name,
           email: formData.email,
@@ -122,7 +125,7 @@ const SuperAdminDashboard = () => {
     try {
       const token = localStorage.getItem('token');
       await axios.put(
-        'http://localhost:5000/api/super-admin/campus-status',
+        `${API_BASE_URL}/super-admin/campus-status`,
         { campusId, isActive },
         {
           headers: { Authorization: `Bearer ${token}` }
@@ -141,7 +144,7 @@ const SuperAdminDashboard = () => {
       if (!newPassword) return;
 
       await axios.put(
-        'http://localhost:5000/api/super-admin/reset-principal-password',
+        `${API_BASE_URL}/super-admin/reset-principal-password`,
         { principalId, newPassword },
         {
           headers: { Authorization: `Bearer ${token}` }

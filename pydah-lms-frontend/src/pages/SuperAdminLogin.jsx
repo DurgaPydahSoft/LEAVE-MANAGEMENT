@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import config from '../config';
 import axios from 'axios';
+
+const API_BASE_URL = config.API_BASE_URL;
 
 const SuperAdminLogin = () => {
   const [formData, setFormData] = useState({
@@ -26,7 +29,7 @@ const SuperAdminLogin = () => {
 
     try {
       const response = await axios.post(
-        'http://localhost:5000/api/super-admin/login',
+        `${API_BASE_URL}/api/super-admin/login`,
         formData
       );
 

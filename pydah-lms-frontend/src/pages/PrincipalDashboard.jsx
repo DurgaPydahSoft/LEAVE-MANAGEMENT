@@ -5,6 +5,7 @@ import { validateEmail } from '../utils/validators';
 import { toast } from 'react-toastify';
 import HodPasswordResetModal from '../components/HodPasswordResetModal';
 import RemarksModal from '../components/RemarksModal';
+import config from '../config';
 
 const BRANCH_OPTIONS = {
   Engineering: ['CSE', 'ECE', 'MECH', 'AGRI', 'CIVIL', 'CSE_AI'],
@@ -40,7 +41,7 @@ const BRANCH_NAMES = {
   FOOD_SCIENCE_NUTRITION: 'Food Science and Nutrition'
 };
 
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = config.API_BASE_URL;
 
 const PrincipalDashboard = () => {
   const [branches, setBranches] = useState([]);

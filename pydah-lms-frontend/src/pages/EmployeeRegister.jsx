@@ -3,9 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import axios from 'axios';
 import { BRANCH_OPTIONS } from '../config/branchOptions';
+import config from '../config';
 
 // Base URL for all API calls
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = config.API_BASE_URL;
 
 const EmployeeRegister = () => {
   const navigate = useNavigate();

@@ -3,6 +3,9 @@ import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import "font-awesome/css/font-awesome.min.css"; // Importing Font Awesome
 import { validateEmail } from '../utils/validators';
+import config from '../config';
+
+const API_BASE_URL = config.API_BASE_URL;
 
 const BRANCH_OPTIONS = {
   engineering: ['CSE', 'ECE', 'MECH', 'AGRI', 'CIVIL', 'CSE_AI'],
@@ -52,11 +55,11 @@ const HodLogin = () => {
         password: formData.password,
         campus: formData.campus,
         branchCode: formData.branchCode,
-        url: 'http://localhost:5000/api/hod/login'
+        url: `${API_BASE_URL}/api/hod/login`
       });
 
       const response = await axios.post(
-        'http://localhost:5000/api/hod/login',
+        `${API_BASE_URL}/api/hod/login`,
         {
           email: formData.email,
           password: formData.password,

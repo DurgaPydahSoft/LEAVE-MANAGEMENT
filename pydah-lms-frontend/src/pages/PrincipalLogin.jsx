@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import { validateEmail, validateCampus } from '../utils/validators';
+import config from '../config';
+
+const API_BASE_URL = config.API_BASE_URL;
 
 const PrincipalLogin = () => {
   const { campus } = useParams();
@@ -43,11 +46,11 @@ const PrincipalLogin = () => {
       console.log('Attempting principal login with:', {
         ...formData,
         campus,
-        url: 'http://localhost:5000/api/principal/login'
+        url: `${API_BASE_URL}/api/principal/login`
       });
 
       const response = await axios.post(
-        'http://localhost:5000/api/principal/login',
+        `${API_BASE_URL}/api/principal/login`,
         { ...formData, campus }
       );
 

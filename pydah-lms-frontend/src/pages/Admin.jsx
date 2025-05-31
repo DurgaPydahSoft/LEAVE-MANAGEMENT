@@ -2,6 +2,10 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import * as XLSX from "xlsx";
+import config from '../config';
+
+const API_BASE_URL = config.API_BASE_URL;
+
 const AdminDashboard = () => {
     const [leaveRequests, setLeaveRequests] = useState([]);
     const [hodLeaveRequests, setHodLeaveRequests] = useState([]);
@@ -25,10 +29,10 @@ const AdminDashboard = () => {
     useEffect(() => {
         const fetchLeaveRequests = async () => {
           try {
-            const facultyResponse = await fetch("https://pydah-lms-backend.onrender.com/api/admin/leave-requests");
+            const facultyResponse = await fetch(`${API_BASE_URL}/api/admin/leave-requests`);
             const facultyData = await facultyResponse.json();
             
-            const hodResponse = await fetch("https://pydah-lms-backend.onrender.com/api/admin/hod-leave-requests");
+            const hodResponse = await fetch(`${API_BASE_URL}/api/admin/hod-leave-requests`);
             const hodData = await hodResponse.json();
       
             // 🔍 Debugging: Log API responses
@@ -103,8 +107,8 @@ const AdminDashboard = () => {
   
     // API URL based on whether it's an HOD request or Faculty request
     const url = isHodRequest
-      ? "http://localhost:5000/api/admin/hod-update-leave-request"
-      : "http://localhost:5000/api/admin/update-leave-request";
+      ? `${API_BASE_URL}/api/admin/hod-update-leave-request`
+      : `${API_BASE_URL}/api/admin/update-leave-request`;
   
     try {
       const response = await axios.put(url, {

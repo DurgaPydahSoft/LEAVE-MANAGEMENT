@@ -6,8 +6,9 @@ import LeaveApplicationForm from "../components/LeaveApplicationForm";
 import CCLRequestForm from "../components/CCLRequestForm";
 import CCLWorkRequestForm from '../components/CCLWorkRequestForm';
 import { createAuthAxios } from '../utils/authAxios';
+import config from '../config';
 
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = config.API_BASE_URL;
 
 const EmployeeDashboard = () => {
   const [employee, setEmployee] = useState(null);

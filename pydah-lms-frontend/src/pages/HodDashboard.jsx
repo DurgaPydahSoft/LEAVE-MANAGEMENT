@@ -6,8 +6,9 @@ import PasswordResetModal from "../components/PasswordResetModal";
 import RemarksModal from "../components/RemarksModal";
 import { toast } from 'react-toastify';
 import { createAuthAxios } from '../utils/authAxios';
+import config from '../config';
 
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = config.API_BASE_URL;
 
 const HodDashboard = () => {
   const [loading, setLoading] = useState(true);
