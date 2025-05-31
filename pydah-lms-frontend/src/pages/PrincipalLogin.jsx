@@ -46,11 +46,11 @@ const PrincipalLogin = () => {
       console.log('Attempting principal login with:', {
         ...formData,
         campus,
-        url: `${API_BASE_URL}/api/principal/login`
+        url: `${API_BASE_URL}/principal/login`
       });
 
       const response = await axios.post(
-        `${API_BASE_URL}/api/principal/login`,
+        `${API_BASE_URL}/principal/login`,
         { ...formData, campus }
       );
 
