@@ -743,14 +743,14 @@ const PrincipalDashboard = () => {
             <div className="bg-secondary rounded-neumorphic shadow-outerRaised p-6">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {forwardedLeaves.map((leave) => (
-                  <div 
+                <div
                     key={leave._id} 
                     className="bg-background p-4 rounded-neumorphic shadow-innerSoft cursor-pointer hover:shadow-outerRaised transition-all duration-300"
                     onClick={() => {
                       setSelectedLeave(leave);
                       setShowLeaveDetailsModal(true);
                     }}
-                  >
+                >
                     <div className="flex justify-between items-start">
                     <div>
                         <h3 className="text-lg font-semibold text-primary">
@@ -763,7 +763,7 @@ const PrincipalDashboard = () => {
                       <p className="text-gray-600">
                           Type: {leave.type ? leave.type.charAt(0).toUpperCase() + leave.type.slice(1) : 
                                  leave.leaveType ? leave.leaveType.charAt(0).toUpperCase() + leave.leaveType.slice(1) : 'N/A'}
-                        </p>
+                      </p>
                         <span className={`inline-block mt-2 px-2 py-1 rounded-full text-xs font-semibold
                           ${leave.status === 'Approved' ? 'bg-green-100 text-green-800' :
                             leave.status === 'Rejected' ? 'bg-red-100 text-red-800' :
@@ -829,7 +829,7 @@ const PrincipalDashboard = () => {
                           <p className="font-medium">
                             {selectedLeave.type ? selectedLeave.type.charAt(0).toUpperCase() + selectedLeave.type.slice(1) : 
                              selectedLeave.leaveType ? selectedLeave.leaveType.charAt(0).toUpperCase() + selectedLeave.leaveType.slice(1) : 'N/A'}
-                          </p>
+                        </p>
                         </div>
                         <div>
                           <p className="text-sm text-gray-600">Duration</p>
@@ -959,35 +959,72 @@ const PrincipalDashboard = () => {
         return (
           <div className="p-6">
             <h2 className="text-2xl font-bold text-primary mb-6">CCL Work Requests</h2>
-            <div className="bg-secondary rounded-neumorphic shadow-outerRaised p-6">
-              <div className="grid grid-cols-1 gap-6">
-                {cclWorkRequests.map((work) => (
-                  <div key={work._id} className="bg-background p-4 rounded-neumorphic shadow-innerSoft">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h3 className="text-lg font-semibold text-primary">{work.employee?.name || 'Unknown Employee'}</h3>
-                        <p className="text-gray-600">{work.employee?.department?.name || 'Unknown Department'}</p>
-                        <p className="text-gray-600">Type: {work.type}</p>
-                        <p className="text-gray-600">Description: {work.description}</p>
-                          </div>
-                            <div className="flex space-x-2">
-                              <button
-                          onClick={() => handleCCLWorkAction(work._id, 'approve')}
-                          className="bg-green-500 text-white px-4 py-2 rounded-neumorphic hover:shadow-innerSoft transition-all duration-300"
-                        >
-                          Approve
-                        </button>
-                        <button
-                          onClick={() => handleCCLWorkAction(work._id, 'reject')}
-                          className="bg-red-500 text-white px-4 py-2 rounded-neumorphic hover:shadow-innerSoft transition-all duration-300"
-                        >
-                          Reject
-                              </button>
-                            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {cclWorkRequests.map((work) => (
+                <div
+                  key={work._id}
+                  className="bg-secondary p-6 rounded-neumorphic shadow-outerRaised hover:shadow-innerSoft transition-all duration-300"
+                >
+                  <div className="flex justify-between items-start mb-4">
+                    <div>
+                      <h3 className="text-lg font-semibold text-primary">
+                        {work.employee?.name || work.employeeName || 'Unknown Employee'}
+                      </h3>
+                      <p className="text-sm text-gray-600">ID: {work.employee?.employeeId || work.employeeEmployeeId || 'N/A'}</p>
                     </div>
+                    <span className={`px-3 py-1 rounded-full text-xs font-semibold
+                      ${work.status === 'Approved' ? 'bg-green-100 text-green-800' :
+                        work.status === 'Rejected' ? 'bg-red-100 text-red-800' :
+                        work.status === 'Forwarded to Principal' ? 'bg-blue-100 text-blue-800' :
+                        'bg-yellow-100 text-yellow-800'}`}
+                    >
+                      {work.status || 'Pending'}
+                    </span>
                   </div>
-                    ))}
-              </div>
+                  <div className="space-y-2 text-sm">
+                    <p className="text-gray-700">
+                      <span className="font-medium">Date:</span> {work.date ? new Date(work.date).toLocaleDateString() : 'N/A'}
+                    </p>
+                    {work.assignedTo && (
+                      <p className="text-gray-700">
+                        <span className="font-medium">Assigned To:</span> {work.assignedTo}
+                      </p>
+                    )}
+                    <p className="text-gray-700">
+                      <span className="font-medium">Reason:</span> {work.reason || 'N/A'}
+                    </p>
+                    {work.hodRemarks && (
+                      <p className="text-gray-700">
+                        <span className="font-medium">HOD Remarks:</span> {work.hodRemarks}
+                      </p>
+                    )}
+                  </div>
+                  {work.status === 'Forwarded to Principal' && (
+                    <div className="mt-4 flex space-x-2">
+                      <button
+                        onClick={() => {
+                          setSelectedCCLWork(work);
+                          setCclRemarks('');
+                          setShowCCLRemarksModal(true);
+                        }}
+                        className="flex-1 bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition-colors"
+                      >
+                        Approve
+                      </button>
+                      <button
+                        onClick={() => {
+                          setSelectedCCLWork(work);
+                          setCclRemarks('');
+                          setShowCCLRemarksModal(true);
+                        }}
+                        className="flex-1 bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition-colors"
+                      >
+                        Reject
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
           </div>
         );

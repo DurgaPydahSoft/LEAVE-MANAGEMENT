@@ -12,6 +12,7 @@ const menuItems = [
 const HodSidebar = ({ activeSection, onSectionChange, onLogout }) => {
   const [isOpen, setIsOpen] = useState(false);
   const campus = localStorage.getItem('campus');
+  const branchCode = localStorage.getItem('branchCode');
 
   const toggleSidebar = () => setIsOpen((prev) => !prev);
 
@@ -39,7 +40,11 @@ const HodSidebar = ({ activeSection, onSectionChange, onLogout }) => {
         ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
         <div className="p-6">
           <h2 className="text-2xl font-bold mb-8 text-primary">
-            {campus ? campus.charAt(0).toUpperCase() + campus.slice(1) : 'HOD'} Dashboard
+            {branchCode
+              ? branchCode.toUpperCase() + ' Dashboard'
+              : campus
+                ? campus.charAt(0).toUpperCase() + campus.slice(1) + ' Dashboard'
+                : 'HOD Dashboard'}
           </h2>
           <nav>
             <ul className="space-y-4">

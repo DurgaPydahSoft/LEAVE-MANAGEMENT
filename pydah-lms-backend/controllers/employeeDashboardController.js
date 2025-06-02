@@ -13,6 +13,36 @@ exports.getDashboard = async (req, res) => {
       return res.status(404).json({ msg: 'Employee not found' });
     }
 
+    // Manually populate substituteFaculty in leaveRequests
+    const { Employee: EmployeeModel } = require('../models');
+    async function populateSubstituteFaculty(leaveRequests) {
+      for (const leave of leaveRequests) {
+        if (leave.alternateSchedule && Array.isArray(leave.alternateSchedule)) {
+          for (const day of leave.alternateSchedule) {
+            if (day.periods && Array.isArray(day.periods)) {
+              for (const period of day.periods) {
+                if (period.substituteFaculty && typeof period.substituteFaculty === 'object' && period.substituteFaculty.name) {
+                  // Already populated
+                  continue;
+                }
+                if (period.substituteFaculty) {
+                  const faculty = await EmployeeModel.findById(period.substituteFaculty).select('name employeeId');
+                  if (faculty) {
+                    period.substituteFaculty = {
+                      _id: faculty._id,
+                      name: faculty.name,
+                      employeeId: faculty.employeeId
+                    };
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    await populateSubstituteFaculty(employee.leaveRequests);
+
     // Get leave statistics
     const leaveStats = {
       totalLeaves: employee.leaveBalance,
@@ -108,6 +138,36 @@ exports.getLeaveHistory = async (req, res) => {
 
     // Sort by applied date (most recent first)
     leaveRequests.sort((a, b) => b.appliedOn - a.appliedOn);
+
+    // Manually populate substituteFaculty in leaveRequests
+    const { Employee: EmployeeModel } = require('../models');
+    async function populateSubstituteFaculty(leaveRequests) {
+      for (const leave of leaveRequests) {
+        if (leave.alternateSchedule && Array.isArray(leave.alternateSchedule)) {
+          for (const day of leave.alternateSchedule) {
+            if (day.periods && Array.isArray(day.periods)) {
+              for (const period of day.periods) {
+                if (period.substituteFaculty && typeof period.substituteFaculty === 'object' && period.substituteFaculty.name) {
+                  // Already populated
+                  continue;
+                }
+                if (period.substituteFaculty) {
+                  const faculty = await EmployeeModel.findById(period.substituteFaculty).select('name employeeId');
+                  if (faculty) {
+                    period.substituteFaculty = {
+                      _id: faculty._id,
+                      name: faculty.name,
+                      employeeId: faculty.employeeId
+                    };
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    await populateSubstituteFaculty(leaveRequests);
 
     res.json(leaveRequests);
   } catch (error) {

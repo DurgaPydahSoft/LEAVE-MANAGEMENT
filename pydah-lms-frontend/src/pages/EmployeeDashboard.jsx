@@ -424,7 +424,15 @@ const EmployeeDashboard = () => {
                                     </div>
                                     <div className="col-span-2">
                                       <span className="text-sm text-gray-600">Substitute Faculty:</span>{' '}
-                                      <span className="font-medium">{period.substituteFaculty || 'N/A'}</span>
+                                      <span className="font-medium">
+                                        {typeof period.substituteFaculty === 'object' && period.substituteFaculty?.name
+                                          ? period.substituteFaculty.name
+                                          : period.substituteFacultyName
+                                            ? period.substituteFacultyName
+                                            : (typeof period.substituteFaculty === 'string' && period.substituteFaculty)
+                                              ? period.substituteFaculty
+                                              : 'N/A'}
+                                      </span>
                                     </div>
                                   </div>
                                 </div>

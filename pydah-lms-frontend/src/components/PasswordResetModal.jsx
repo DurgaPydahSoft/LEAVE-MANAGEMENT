@@ -24,7 +24,7 @@ const PasswordResetModal = ({
       setLoading(true);
       console.log('Attempting to reset password for employee:', employeeId);
 
-      const response = await axios.post(
+      const response = await axios.put(
         `${API_BASE_URL}/hod/employees/${employeeId}/reset-password`,
         { newPassword },
         {

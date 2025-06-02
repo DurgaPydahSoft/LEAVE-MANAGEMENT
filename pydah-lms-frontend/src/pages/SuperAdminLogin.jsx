@@ -29,7 +29,7 @@ const SuperAdminLogin = () => {
 
     try {
       const response = await axios.post(
-        `${API_BASE_URL}/api/super-admin/login`,
+        `${API_BASE_URL}/super-admin/login`,
         formData
       );
 

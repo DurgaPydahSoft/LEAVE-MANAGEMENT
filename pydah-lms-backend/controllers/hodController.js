@@ -904,10 +904,9 @@ const getCCLWorkRequests = async (req, res) => {
     .select('name email employeeId department')
     .populate({
       path: 'cclWork',
-      match: { status: 'Pending' },
+      match: { status: { $in: ['Pending', 'Forwarded to Principal', 'Approved', 'Rejected'] } },
       options: { sort: { createdAt: -1 } }
     });
-
     console.log(`Found ${employees.length} employees in department`);
 
     // Collect all CCL work requests
