@@ -127,7 +127,7 @@ const App = () => {
           {/* Fallback Route */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
-        {/* <Footer /> */}
+        {/*  <Footer />*/}
       </div>
     </Router>
   );
