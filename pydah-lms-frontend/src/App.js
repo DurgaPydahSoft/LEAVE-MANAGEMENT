@@ -55,7 +55,7 @@ const App = () => {
   return (
     <Router>
       <div className="min-h-screen bg-background">
-        <Header />
+        {/* <Header /> */}
         <ToastContainer
           position="top-right"
           autoClose={3000}
@@ -127,7 +127,7 @@ const App = () => {
           {/* Fallback Route */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
-        <Footer />
+        {/* <Footer /> */}
       </div>
     </Router>
   );

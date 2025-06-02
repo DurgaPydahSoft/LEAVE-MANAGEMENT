@@ -555,8 +555,8 @@ const PrincipalDashboard = () => {
   const renderContent = () => {
     switch (activeSection) {
       case 'dashboard':
-        return (
-          <div className="p-6">
+    return (
+          <div className="p-6 mt-4">
             <h2 className="text-2xl font-bold text-primary mb-6">Dashboard Overview</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {/* Stats Cards */}
@@ -574,171 +574,171 @@ const PrincipalDashboard = () => {
                   {forwardedLeaves.filter(leave => leave.status === 'pending').length}
                 </p>
               </div>
-            </div>
-          </div>
-        );
+        </div>
+      </div>
+    );
 
       case 'hods':
-        return (
-          <div className="p-6">
+  return (
+          <div className="p-6 mt-4">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold text-primary">HOD Management</h2>
-              <button
+          <button
                 onClick={() => setShowCreateModal(true)}
                 className="bg-primary text-white px-4 py-2 rounded-neumorphic
-                         hover:shadow-innerSoft transition-all duration-300"
-              >
+                     hover:shadow-innerSoft transition-all duration-300"
+          >
                 Create HOD
-              </button>
-            </div>
+          </button>
+        </div>
             <div className="bg-secondary rounded-neumorphic shadow-outerRaised p-6">
               <div className="overflow-x-auto">
-                <table className="min-w-full bg-white rounded-lg overflow-hidden">
-                  <thead className="bg-gray-100">
-                    <tr>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Name</th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Email</th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Department</th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Phone</th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Status</th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200">
-                    {hods.map((hod) => (
-                      <tr key={hod._id} className="hover:bg-gray-50">
-                        <td className="px-4 py-3 text-sm text-gray-900">{hod.name}</td>
-                        <td className="px-4 py-3 text-sm text-gray-900">{hod.email}</td>
-                        <td className="px-4 py-3 text-sm text-gray-900">
-                          <div className="group relative">
-                            <span>{hod.department?.code || hod.branchCode}</span>
-                            <div className="hidden group-hover:block absolute z-10 bg-black text-white text-xs rounded py-1 px-2 left-0 -bottom-8">
-                              {hod.department?.name || BRANCH_NAMES[hod.branchCode] || hod.branchCode}
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-900">{hod.phoneNumber || 'N/A'}</td>
-                        <td className="px-4 py-3 text-sm">
-                          <span className={`px-2 py-1 rounded-full text-xs font-semibold
-                            ${(hod.status === 'active' || hod.isActive)
-                              ? 'bg-green-100 text-green-800' 
-                              : 'bg-red-100 text-red-800'}`}
-                          >
-                            {hod.status || (hod.isActive ? 'active' : 'inactive')}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-sm space-x-2">
-                          <button
-                            onClick={() => handleEditClick(hod)}
-                            className="bg-blue-500 text-white px-3 py-1 rounded-md text-xs hover:bg-blue-600 transition-colors"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => handleResetPassword(hod)}
-                            className="bg-orange-500 text-white px-3 py-1 rounded-md text-xs hover:bg-orange-600 transition-colors"
-                          >
-                            Reset Password
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+            <table className="min-w-full bg-white rounded-lg overflow-hidden">
+              <thead className="bg-gray-100">
+                <tr>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Name</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Email</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Department</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Phone</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Status</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {hods.map((hod) => (
+                  <tr key={hod._id} className="hover:bg-gray-50">
+                    <td className="px-4 py-3 text-sm text-gray-900">{hod.name}</td>
+                    <td className="px-4 py-3 text-sm text-gray-900">{hod.email}</td>
+                    <td className="px-4 py-3 text-sm text-gray-900">
+                      <div className="group relative">
+                        <span>{hod.department?.code || hod.branchCode}</span>
+                        <div className="hidden group-hover:block absolute z-10 bg-black text-white text-xs rounded py-1 px-2 left-0 -bottom-8">
+                          {hod.department?.name || BRANCH_NAMES[hod.branchCode] || hod.branchCode}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-900">{hod.phoneNumber || 'N/A'}</td>
+                    <td className="px-4 py-3 text-sm">
+                      <span className={`px-2 py-1 rounded-full text-xs font-semibold
+                        ${(hod.status === 'active' || hod.isActive)
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-red-100 text-red-800'}`}
+                      >
+                        {hod.status || (hod.isActive ? 'active' : 'inactive')}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-sm space-x-2">
+                      <button
+                        onClick={() => handleEditClick(hod)}
+                        className="bg-blue-500 text-white px-3 py-1 rounded-md text-xs hover:bg-blue-600 transition-colors"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleResetPassword(hod)}
+                        className="bg-orange-500 text-white px-3 py-1 rounded-md text-xs hover:bg-orange-600 transition-colors"
+                      >
+                        Reset Password
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
           </div>
         );
 
       case 'employees':
         return (
-          <div className="p-6">
+          <div className="p-6 mt-4">
             <h2 className="text-2xl font-bold text-primary mb-6">Employee Management</h2>
             <div className="bg-secondary rounded-neumorphic shadow-outerRaised p-6">
               {/* Employee filters */}
               <div className="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-                <input
-                  type="text"
-                  placeholder="Search by name, email, or ID..."
-                  value={employeeFilters.search}
+            <input
+              type="text"
+              placeholder="Search by name, email, or ID..."
+              value={employeeFilters.search}
                   onChange={(e) => setEmployeeFilters({ ...employeeFilters, search: e.target.value })}
                   className="p-2 rounded-neumorphic shadow-innerSoft bg-background"
-                />
-                <select
-                  value={employeeFilters.department}
+            />
+            <select
+              value={employeeFilters.department}
                   onChange={(e) => setEmployeeFilters({ ...employeeFilters, department: e.target.value })}
                   className="p-2 rounded-neumorphic shadow-innerSoft bg-background"
-                >
-                  <option value="">All Departments</option>
+            >
+              <option value="">All Departments</option>
                   {Object.entries(BRANCH_NAMES).map(([code, name]) => (
                     <option key={code} value={code}>{name}</option>
-                  ))}
-                </select>
-                <select
-                  value={employeeFilters.status}
+              ))}
+            </select>
+            <select
+              value={employeeFilters.status}
                   onChange={(e) => setEmployeeFilters({ ...employeeFilters, status: e.target.value })}
                   className="p-2 rounded-neumorphic shadow-innerSoft bg-background"
-                >
-                  <option value="">All Status</option>
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
-                </select>
-              </div>
+            >
+              <option value="">All Status</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+          </div>
 
               {/* Employee list */}
               <div className="overflow-x-auto">
-                <table className="min-w-full bg-white rounded-lg overflow-hidden">
-                  <thead className="bg-gray-100">
-                    <tr>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Employee ID</th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Name</th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Email</th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Department</th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Designation</th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Phone</th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200">
-                    {employees.map((employee) => (
-                      <tr key={employee._id} className="hover:bg-gray-50">
-                        <td className="px-4 py-3 text-sm text-gray-900">{employee.employeeId}</td>
-                        <td className="px-4 py-3 text-sm text-gray-900">{employee.name}</td>
-                        <td className="px-4 py-3 text-sm text-gray-900">{employee.email}</td>
-                        <td className="px-4 py-3 text-sm text-gray-900">
-                          <div className="group relative">
-                            <span>{employee.branchCode || employee.department}</span>
-                            <div className="hidden group-hover:block absolute z-10 bg-black text-white text-xs rounded py-1 px-2 left-0 -bottom-8">
-                              {BRANCH_NAMES[employee.branchCode] || BRANCH_NAMES[employee.department] || employee.department}
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-900">
-                          {employee.designation}
-                          {employee.role === 'faculty' && <span className="ml-1 text-xs text-blue-600">(Faculty)</span>}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-900">{employee.phoneNumber || 'N/A'}</td>
-                        <td className="px-4 py-3 text-sm">
-                          <span className={`px-2 py-1 rounded-full text-xs font-semibold
-                            ${employee.status === 'active'
-                              ? 'bg-green-100 text-green-800' 
-                              : 'bg-red-100 text-red-800'}`}
-                          >
-                            {employee.status}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+            <table className="min-w-full bg-white rounded-lg overflow-hidden">
+              <thead className="bg-gray-100">
+                <tr>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Employee ID</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Name</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Email</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Department</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Designation</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Phone</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {employees.map((employee) => (
+                  <tr key={employee._id} className="hover:bg-gray-50">
+                    <td className="px-4 py-3 text-sm text-gray-900">{employee.employeeId}</td>
+                    <td className="px-4 py-3 text-sm text-gray-900">{employee.name}</td>
+                    <td className="px-4 py-3 text-sm text-gray-900">{employee.email}</td>
+                    <td className="px-4 py-3 text-sm text-gray-900">
+                      <div className="group relative">
+                        <span>{employee.branchCode || employee.department}</span>
+                        <div className="hidden group-hover:block absolute z-10 bg-black text-white text-xs rounded py-1 px-2 left-0 -bottom-8">
+                          {BRANCH_NAMES[employee.branchCode] || BRANCH_NAMES[employee.department] || employee.department}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-900">
+                      {employee.designation}
+                      {employee.role === 'faculty' && <span className="ml-1 text-xs text-blue-600">(Faculty)</span>}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-900">{employee.phoneNumber || 'N/A'}</td>
+                    <td className="px-4 py-3 text-sm">
+                      <span className={`px-2 py-1 rounded-full text-xs font-semibold
+                        ${employee.status === 'active'
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-red-100 text-red-800'}`}
+                      >
+                        {employee.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
+        </div>
+              </div>
         );
 
       case 'leaves':
         return (
-          <div className="p-6">
+          <div className="p-6 mt-4 ">
             <h2 className="text-2xl font-bold text-primary mb-6">Leave Requests</h2>
             <div className="bg-secondary rounded-neumorphic shadow-outerRaised p-6">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -752,15 +752,15 @@ const PrincipalDashboard = () => {
                     }}
                   >
                     <div className="flex justify-between items-start">
-                      <div>
+                    <div>
                         <h3 className="text-lg font-semibold text-primary">
                           {leave.employee?.name || leave.employeeName || 'Unknown Employee'}
-                        </h3>
+                      </h3>
                         <p className="text-gray-600">ID: {leave.employee?.employeeId || leave.employeeEmployeeId || 'N/A'}</p>
-                        <p className="text-gray-600">
+                      <p className="text-gray-600">
                           {new Date(leave.startDate).toLocaleDateString()} - {new Date(leave.endDate).toLocaleDateString()}
-                        </p>
-                        <p className="text-gray-600">
+                      </p>
+                      <p className="text-gray-600">
                           Type: {leave.type ? leave.type.charAt(0).toUpperCase() + leave.type.slice(1) : 
                                  leave.leaveType ? leave.leaveType.charAt(0).toUpperCase() + leave.leaveType.slice(1) : 'N/A'}
                         </p>
@@ -862,25 +862,25 @@ const PrincipalDashboard = () => {
                         <div className="col-span-2">
                           <p className="text-sm text-gray-600">Reason</p>
                           <p className="font-medium">{selectedLeave.reason || 'No reason provided'}</p>
-                        </div>
+                    </div>
                       </div>
                     </div>
 
                     {/* Remarks */}
                     <div className="bg-gray-50 p-4 rounded-lg">
                       <h4 className="font-semibold text-gray-900 mb-2">Remarks</h4>
-                      <div className="space-y-2">
+                        <div className="space-y-2">
                         {selectedLeave.hodRemarks && (
                           <div>
                             <p className="text-sm text-gray-600">HOD Remarks</p>
                             <p className="font-medium">{selectedLeave.hodRemarks}</p>
-                          </div>
-                        )}
+                        </div>
+                      )}
                         {selectedLeave.principalRemarks && (
                           <div>
                             <p className="text-sm text-gray-600">Principal Remarks</p>
                             <p className="font-medium">{selectedLeave.principalRemarks}</p>
-                          </div>
+                                </div>
                         )}
                       </div>
                     </div>
@@ -895,35 +895,35 @@ const PrincipalDashboard = () => {
                               <p className="font-medium mb-2">
                                 Date: {schedule.date ? new Date(schedule.date).toLocaleDateString() : 'N/A'}
                               </p>
-                              {schedule.periods && schedule.periods.length > 0 ? (
-                                <div className="space-y-2">
-                                  {schedule.periods.map((period, pIndex) => (
+                                {schedule.periods && schedule.periods.length > 0 ? (
+                                  <div className="space-y-2">
+                                    {schedule.periods.map((period, pIndex) => (
                                     <div key={pIndex} className="bg-gray-50 p-2 rounded">
-                                      <div className="grid grid-cols-2 gap-2">
-                                        <div>
+                                        <div className="grid grid-cols-2 gap-2">
+                                          <div>
                                           <span className="text-sm text-gray-600">Period:</span>{' '}
                                           <span className="font-medium">{period.periodNumber || 'N/A'}</span>
-                                        </div>
-                                        <div>
+                                          </div>
+                                          <div>
                                           <span className="text-sm text-gray-600">Class:</span>{' '}
                                           <span className="font-medium">{period.assignedClass || 'N/A'}</span>
-                                        </div>
-                                        <div className="col-span-2">
+                                          </div>
+                                          <div className="col-span-2">
                                           <span className="text-sm text-gray-600">Substitute Faculty:</span>{' '}
                                           <span className="font-medium">{period.substituteFaculty || 'N/A'}</span>
+                                          </div>
                                         </div>
                                       </div>
-                                    </div>
-                                  ))}
-                                </div>
-                              ) : (
-                                <p className="text-gray-500 italic">No periods assigned for this day</p>
-                              )}
-                            </div>
-                          ))}
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <p className="text-gray-500 italic">No periods assigned for this day</p>
+                                )}
+                              </div>
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      )}
 
                     {/* Action Buttons */}
                     {selectedLeave.status === 'Forwarded by HOD' && (
@@ -946,7 +946,7 @@ const PrincipalDashboard = () => {
                         >
                           Reject
                         </button>
-                      </div>
+                    </div>
                     )}
                   </div>
                 </div>
@@ -965,30 +965,28 @@ const PrincipalDashboard = () => {
                   <div key={work._id} className="bg-background p-4 rounded-neumorphic shadow-innerSoft">
                     <div className="flex justify-between items-start">
                       <div>
-                        <h3 className="text-lg font-semibold text-primary">{work.employee.name}</h3>
-                        <p className="text-gray-600">{work.employee.department?.name}</p>
+                        <h3 className="text-lg font-semibold text-primary">{work.employee?.name || 'Unknown Employee'}</h3>
+                        <p className="text-gray-600">{work.employee?.department?.name || 'Unknown Department'}</p>
                         <p className="text-gray-600">Type: {work.type}</p>
                         <p className="text-gray-600">Description: {work.description}</p>
-                      </div>
-                      <div className="flex space-x-2">
-                        <button
+                          </div>
+                            <div className="flex space-x-2">
+                              <button
                           onClick={() => handleCCLWorkAction(work._id, 'approve')}
-                          className="bg-green-500 text-white px-4 py-2 rounded-neumorphic
-                                   hover:shadow-innerSoft transition-all duration-300"
+                          className="bg-green-500 text-white px-4 py-2 rounded-neumorphic hover:shadow-innerSoft transition-all duration-300"
                         >
                           Approve
                         </button>
                         <button
                           onClick={() => handleCCLWorkAction(work._id, 'reject')}
-                          className="bg-red-500 text-white px-4 py-2 rounded-neumorphic
-                                   hover:shadow-innerSoft transition-all duration-300"
+                          className="bg-red-500 text-white px-4 py-2 rounded-neumorphic hover:shadow-innerSoft transition-all duration-300"
                         >
                           Reject
-                        </button>
-                      </div>
+                              </button>
+                            </div>
                     </div>
                   </div>
-                ))}
+                    ))}
               </div>
             </div>
           </div>
@@ -1026,268 +1024,268 @@ const PrincipalDashboard = () => {
         {error && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg m-4">
             {error}
-          </div>
-        )}
+              </div>
+            )}
         <div className="p-4 lg:p-6">
           {renderContent()}
+          </div>
         </div>
-      </div>
 
-      {/* Create HOD Modal */}
-      {showCreateModal && (
+        {/* Create HOD Modal */}
+        {showCreateModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-secondary rounded-neumorphic shadow-outerRaised p-4 lg:p-8 max-w-md w-full max-h-[90vh] overflow-y-auto">
             <h2 className="text-xl lg:text-2xl font-bold text-primary mb-6">
-              Create New HOD
-            </h2>
-            
-            <form onSubmit={handleCreateHOD}>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-gray-700 text-sm font-bold mb-2">
-                    Name
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.name}
-                    onChange={(e) => setFormData({...formData, name: e.target.value})}
+                Create New HOD
+              </h2>
+              
+              <form onSubmit={handleCreateHOD}>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-gray-700 text-sm font-bold mb-2">
+                      Name
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.name}
+                      onChange={(e) => setFormData({...formData, name: e.target.value})}
                     className="w-full p-2 lg:p-3 rounded-neumorphic shadow-innerSoft bg-background
-                             focus:outline-none focus:ring-2 focus:ring-primary"
-                    required
-                  />
-                </div>
+                               focus:outline-none focus:ring-2 focus:ring-primary"
+                      required
+                    />
+                  </div>
 
-                <div>
-                  <label className="block text-gray-700 text-sm font-bold mb-2">
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData({...formData, email: e.target.value})}
+                  <div>
+                    <label className="block text-gray-700 text-sm font-bold mb-2">
+                      Email
+                    </label>
+                    <input
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) => setFormData({...formData, email: e.target.value})}
                     className="w-full p-2 lg:p-3 rounded-neumorphic shadow-innerSoft bg-background
-                             focus:outline-none focus:ring-2 focus:ring-primary"
-                    required
-                  />
-                </div>
+                               focus:outline-none focus:ring-2 focus:ring-primary"
+                      required
+                    />
+                  </div>
 
-                <div>
-                  <label className="block text-gray-700 text-sm font-bold mb-2">
-                    HOD ID (optional)
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.HODId}
-                    onChange={(e) => setFormData({...formData, HODId: e.target.value})}
+                  <div>
+                    <label className="block text-gray-700 text-sm font-bold mb-2">
+                      HOD ID (optional)
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.HODId}
+                      onChange={(e) => setFormData({...formData, HODId: e.target.value})}
                     className="w-full p-2 lg:p-3 rounded-neumorphic shadow-innerSoft bg-background
-                             focus:outline-none focus:ring-2 focus:ring-primary"
-                    placeholder="Leave empty to use email as ID"
-                  />
-                </div>
+                               focus:outline-none focus:ring-2 focus:ring-primary"
+                      placeholder="Leave empty to use email as ID"
+                    />
+                  </div>
 
-                <div>
-                  <label className="block text-gray-700 text-sm font-bold mb-2">
-                    Password
-                  </label>
-                  <input
-                    type="password"
-                    value={formData.password}
-                    onChange={(e) => setFormData({...formData, password: e.target.value})}
+                  <div>
+                    <label className="block text-gray-700 text-sm font-bold mb-2">
+                      Password
+                    </label>
+                    <input
+                      type="password"
+                      value={formData.password}
+                      onChange={(e) => setFormData({...formData, password: e.target.value})}
                     className="w-full p-2 lg:p-3 rounded-neumorphic shadow-innerSoft bg-background
-                             focus:outline-none focus:ring-2 focus:ring-primary"
-                    required
-                  />
-                </div>
+                               focus:outline-none focus:ring-2 focus:ring-primary"
+                      required
+                    />
+                  </div>
 
-                <div>
-                  <label className="block text-gray-700 text-sm font-bold mb-2">
-                    Branch
-                  </label>
-                  <select
-                    value={formData.branchCode}
-                    onChange={(e) => setFormData({...formData, branchCode: e.target.value})}
+                  <div>
+                    <label className="block text-gray-700 text-sm font-bold mb-2">
+                      Branch
+                    </label>
+                    <select
+                      value={formData.branchCode}
+                      onChange={(e) => setFormData({...formData, branchCode: e.target.value})}
                     className="w-full p-2 lg:p-3 rounded-neumorphic shadow-innerSoft bg-background
-                             focus:outline-none focus:ring-2 focus:ring-primary"
-                    required
-                  >
-                    <option value="">Select a branch</option>
+                               focus:outline-none focus:ring-2 focus:ring-primary"
+                      required
+                    >
+                      <option value="">Select a branch</option>
                     {Object.keys(BRANCH_NAMES).map((branch) => (
-                      <option key={branch} value={branch}>
+                        <option key={branch} value={branch}>
                         {BRANCH_NAMES[branch]}
-                      </option>
-                    ))}
-                  </select>
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
-              </div>
 
-              <div className="flex justify-end space-x-4 mt-6">
-                <button
-                  type="button"
-                  onClick={() => setShowCreateModal(false)}
+                <div className="flex justify-end space-x-4 mt-6">
+                  <button
+                    type="button"
+                    onClick={() => setShowCreateModal(false)}
                   className="bg-gray-500 text-white px-3 lg:px-4 py-2 rounded-neumorphic
-                           hover:shadow-innerSoft transition-all duration-300"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
+                             hover:shadow-innerSoft transition-all duration-300"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
                   className="bg-primary text-white px-3 lg:px-4 py-2 rounded-neumorphic
-                           hover:shadow-innerSoft transition-all duration-300"
-                >
-                  Create
-                </button>
-              </div>
-            </form>
+                             hover:shadow-innerSoft transition-all duration-300"
+                  >
+                    Create
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Edit HOD Modal */}
-      {showEditModal && (
+        {/* Edit HOD Modal */}
+        {showEditModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg p-4 lg:p-6 max-w-md w-full max-h-[90vh] overflow-y-auto">
             <h3 className="text-lg lg:text-xl font-bold mb-4">Edit HOD Details</h3>
-            <form onSubmit={handleEditSubmit}>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Name</label>
-                  <input
-                    type="text"
-                    value={editForm.name}
-                    onChange={(e) => setEditForm({...editForm, name: e.target.value})}
+              <form onSubmit={handleEditSubmit}>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Name</label>
+                    <input
+                      type="text"
+                      value={editForm.name}
+                      onChange={(e) => setEditForm({...editForm, name: e.target.value})}
                     className="mt-1 block w-full p-2 lg:p-3 rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Email</label>
-                  <input
-                    type="email"
-                    value={editForm.email}
-                    onChange={(e) => setEditForm({...editForm, email: e.target.value})}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Email</label>
+                    <input
+                      type="email"
+                      value={editForm.email}
+                      onChange={(e) => setEditForm({...editForm, email: e.target.value})}
                     className="mt-1 block w-full p-2 lg:p-3 rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Phone Number</label>
-                  <input
-                    type="text"
-                    value={editForm.phoneNumber}
-                    onChange={(e) => setEditForm({...editForm, phoneNumber: e.target.value})}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Phone Number</label>
+                    <input
+                      type="text"
+                      value={editForm.phoneNumber}
+                      onChange={(e) => setEditForm({...editForm, phoneNumber: e.target.value})}
                     className="mt-1 block w-full p-2 lg:p-3 rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Department Code</label>
-                  <input
-                    type="text"
-                    value={editForm.department}
-                    onChange={(e) => setEditForm({...editForm, department: e.target.value})}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Department Code</label>
+                    <input
+                      type="text"
+                      value={editForm.department}
+                      onChange={(e) => setEditForm({...editForm, department: e.target.value})}
                     className="mt-1 block w-full p-2 lg:p-3 rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Status</label>
-                  <select
-                    value={editForm.status}
-                    onChange={(e) => setEditForm({...editForm, status: e.target.value})}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Status</label>
+                    <select
+                      value={editForm.status}
+                      onChange={(e) => setEditForm({...editForm, status: e.target.value})}
                     className="mt-1 block w-full p-2 lg:p-3 rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
-                  >
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
-                  </select>
+                    >
+                      <option value="active">Active</option>
+                      <option value="inactive">Inactive</option>
+                    </select>
+                  </div>
                 </div>
-              </div>
-              <div className="mt-6 flex justify-end space-x-3">
-                <button
-                  type="button"
-                  onClick={() => setShowEditModal(false)}
+                <div className="mt-6 flex justify-end space-x-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowEditModal(false)}
                   className="bg-gray-200 text-gray-700 px-3 lg:px-4 py-2 rounded-md hover:bg-gray-300"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                  className="bg-primary text-white px-3 lg:px-4 py-2 rounded-md hover:bg-primary-dark"
+                  >
+                    Save Changes
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Password Reset Modal */}
+        <HodPasswordResetModal
+          show={showPasswordResetModal}
+          onClose={() => {
+            setShowPasswordResetModal(false);
+            setSelectedHod(null);
+          }}
+          hod={selectedHod}
+          token={token}
+          loading={loading}
+          setLoading={setLoading}
+        />
+
+        {/* Remarks Modal */}
+        <RemarksModal
+          show={showRemarksModal}
+          onClose={() => {
+            setShowRemarksModal(false);
+            setSelectedAction(null);
+            setSelectedRequestId(null);
+          }}
+          onSubmit={handleRemarksSubmit}
+          action={selectedAction}
+        />
+
+        {/* CCL Work Request Remarks Modal */}
+        {showCCLRemarksModal && selectedCCLWork && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-xl p-4 lg:p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                Review CCL Work Request
+              </h3>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Remarks
+                </label>
+                <textarea
+                  value={cclRemarks}
+                  onChange={(e) => setCclRemarks(e.target.value)}
+                  rows="3"
+                className="w-full p-2 lg:p-3 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  placeholder="Enter your remarks..."
+                />
+              </div>
+              <div className="flex justify-end space-x-4">
+                <button
+                  onClick={() => {
+                    setSelectedCCLWork(null);
+                    setCclRemarks('');
+                    setShowCCLRemarksModal(false);
+                  }}
+                className="px-3 lg:px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
                 >
                   Cancel
                 </button>
                 <button
-                  type="submit"
-                  className="bg-primary text-white px-3 lg:px-4 py-2 rounded-md hover:bg-primary-dark"
+                  onClick={() => handleCCLWorkAction('Approved')}
+                className="px-3 lg:px-4 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-md hover:bg-green-700"
                 >
-                  Save Changes
+                  Approve
+                </button>
+                <button
+                  onClick={() => handleCCLWorkAction('Rejected')}
+                className="px-3 lg:px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700"
+                >
+                  Reject
                 </button>
               </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Password Reset Modal */}
-      <HodPasswordResetModal
-        show={showPasswordResetModal}
-        onClose={() => {
-          setShowPasswordResetModal(false);
-          setSelectedHod(null);
-        }}
-        hod={selectedHod}
-        token={token}
-        loading={loading}
-        setLoading={setLoading}
-      />
-
-      {/* Remarks Modal */}
-      <RemarksModal
-        show={showRemarksModal}
-        onClose={() => {
-          setShowRemarksModal(false);
-          setSelectedAction(null);
-          setSelectedRequestId(null);
-        }}
-        onSubmit={handleRemarksSubmit}
-        action={selectedAction}
-      />
-
-      {/* CCL Work Request Remarks Modal */}
-      {showCCLRemarksModal && selectedCCLWork && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg shadow-xl p-4 lg:p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              Review CCL Work Request
-            </h3>
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Remarks
-              </label>
-              <textarea
-                value={cclRemarks}
-                onChange={(e) => setCclRemarks(e.target.value)}
-                rows="3"
-                className="w-full p-2 lg:p-3 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                placeholder="Enter your remarks..."
-              />
-            </div>
-            <div className="flex justify-end space-x-4">
-              <button
-                onClick={() => {
-                  setSelectedCCLWork(null);
-                  setCclRemarks('');
-                  setShowCCLRemarksModal(false);
-                }}
-                className="px-3 lg:px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => handleCCLWorkAction('Approved')}
-                className="px-3 lg:px-4 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-md hover:bg-green-700"
-              >
-                Approve
-              </button>
-              <button
-                onClick={() => handleCCLWorkAction('Rejected')}
-                className="px-3 lg:px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700"
-              >
-                Reject
-              </button>
             </div>
           </div>
-        </div>
-      )}
+        )}
     </div>
   );
 };
