@@ -666,10 +666,10 @@ const HRDashboard = () => {
               <FaUserTie className="text-white text-lg" /> Register New Employee
             </button>
             <button
-              className="bg-blue-600 text-white px-4 py-2 rounded-md shadow hover:bg-blue-700 transition flex items-center gap-2"
+              className="bg-primary text-white px-4 py-2 rounded-md shadow hover:bg-primary/20 transition flex items-center gap-2"
               onClick={() => setShowBulkModal(true)}
             >
-              Bulk Register
+              <FaUsers className="text-white text-lg" />Bulk Register
             </button>
           </div>
           {/* Filters */}

@@ -109,10 +109,8 @@ const EmployeeDashboard = () => {
   }, [fetchEmployee, fetchCCLHistory, fetchCclWorkHistory]);
 
   const handleLogout = () => {
-    if (window.confirm("Are you sure you want to log out?")) {
-      localStorage.clear();
-      navigate('/login', { replace: true });
-    }
+    localStorage.clear();
+    navigate('/login', { replace: true });
   };
 
   const handleLeaveSubmit = (newLeaveRequest) => {

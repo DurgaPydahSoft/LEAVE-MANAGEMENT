@@ -79,7 +79,8 @@ const PrincipalDashboard = () => {
     email: '',
     phoneNumber: '',
     department: '',
-    status: ''
+    status: 'active',
+    specialPermission: false
   });
   const [leaveFilters, setLeaveFilters] = useState({
     startDate: '',
@@ -87,6 +88,7 @@ const PrincipalDashboard = () => {
     department: '',
     leaveType: ''
   });
+  const [editingEmployee, setEditingEmployee] = useState(null);
 
   const navigate = useNavigate();
   const campus = localStorage.getItem('campus');
@@ -154,42 +156,24 @@ const PrincipalDashboard = () => {
   const fetchEmployees = async () => {
     try {
       const token = localStorage.getItem('token');
-      const campus = localStorage.getItem('campus');
-      
-      console.log('Fetching employees with:', {
-        token: token ? 'Present' : 'Missing',
-        campus,
-        filters: employeeFilters,
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+      const response = await fetch(`${API_BASE_URL}/principal/employees`, {
+        headers: { 'Authorization': `Bearer ${token}` }
       });
 
-      const queryParams = new URLSearchParams(employeeFilters).toString();
-      const url = `${API_BASE_URL}/principal/employees?${queryParams}`;
-      console.log('Request URL:', url);
+      if (!response.ok) {
+        throw new Error('Failed to fetch employees');
+      }
 
-      const response = await axios.get(url, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      console.log('Employee fetch response:', {
-        status: response.status,
-        data: response.data,
-        employeeCount: response.data.length
-      });
-
-      setEmployees(response.data);
+      const data = await response.json();
+      // Ensure specialPermission is properly set for each employee
+      const employeesWithPermission = data.map(emp => ({
+        ...emp,
+        specialPermission: emp.specialPermission || false
+      }));
+      setEmployees(employeesWithPermission);
     } catch (error) {
-      console.error('Error fetching employees:', {
-        message: error.message,
-        response: error.response?.data,
-        status: error.response?.status,
-        stack: error.stack
-      });
-      toast.error(error.response?.data?.msg || 'Failed to fetch employees');
+      console.error('Error fetching employees:', error);
+      toast.error('Failed to fetch employees');
     }
   };
 
@@ -651,38 +635,42 @@ const PrincipalDashboard = () => {
   };
 
   const handleEditEmployeeClick = (employee) => {
-    setSelectedEmployee(employee);
+    console.log('Editing employee:', employee); // Debug log
+    setEditingEmployee(employee);
     setEditEmployeeForm({
       name: employee.name,
       email: employee.email,
-      phoneNumber: employee.phoneNumber || '',
-      department: employee.branchCode || employee.department || '',
-      status: employee.status || 'active'
+      phoneNumber: employee.phoneNumber,
+      department: employee.department,
+      status: employee.status,
+      specialPermission: Boolean(employee.specialPermission) // Ensure boolean value
     });
-    setShowEditEmployeeModal(true);
   };
 
   const handleEditEmployeeSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.put(
-        `${API_BASE_URL}/principal/employees/${selectedEmployee._id}`,
-        editEmployeeForm,
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
-      );
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE_URL}/principal/employees/${editingEmployee._id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(editEmployeeForm)
+      });
 
-      // Update the employees list
-      setEmployees(employees.map(emp => 
-        emp._id === selectedEmployee._id ? response.data : emp
-      ));
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.msg || 'Failed to update employee');
+      }
 
-      setShowEditEmployeeModal(false);
-      toast.success('Employee details updated successfully');
+      toast.success('Employee updated successfully');
+      await fetchEmployees(); // Refresh the employees list with the latest data
+      setEditingEmployee(null);
     } catch (error) {
       console.error('Error updating employee:', error);
-      toast.error(error.response?.data?.msg || 'Failed to update employee');
+      toast.error(error.message || 'Failed to update employee');
     }
   };
 
@@ -1708,90 +1696,106 @@ const PrincipalDashboard = () => {
       )}
 
       {/* Edit Employee Modal */}
-      {showEditEmployeeModal && (
+      {editingEmployee && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold text-primary">Edit Employee Details</h3>
-              <button
-                onClick={() => setShowEditEmployeeModal(false)}
-                className="text-gray-400 hover:text-gray-700 text-2xl font-bold focus:outline-none"
-                aria-label="Close"
-              >
-                ×
-              </button>
-            </div>
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h2 className="text-xl font-bold mb-4">Edit Employee</h2>
             <form onSubmit={handleEditEmployeeSubmit} className="space-y-4">
               <div>
-                <label className="block text-gray-700 text-sm font-semibold mb-1">Name</label>
+                <label className="block text-sm font-medium text-gray-700">Name</label>
                 <input
                   type="text"
                   value={editEmployeeForm.name}
-                  onChange={(e) => setEditEmployeeForm({...editEmployeeForm, name: e.target.value})}
-                  className="w-full p-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary transition"
+                  onChange={(e) => setEditEmployeeForm(prev => ({ ...prev, name: e.target.value }))}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                   required
                 />
               </div>
               <div>
-                <label className="block text-gray-700 text-sm font-semibold mb-1">Email</label>
+                <label className="block text-sm font-medium text-gray-700">Email</label>
                 <input
                   type="email"
                   value={editEmployeeForm.email}
-                  onChange={(e) => setEditEmployeeForm({...editEmployeeForm, email: e.target.value})}
-                  className="w-full p-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary transition"
+                  onChange={(e) => setEditEmployeeForm(prev => ({ ...prev, email: e.target.value }))}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                   required
                 />
               </div>
               <div>
-                <label className="block text-gray-700 text-sm font-semibold mb-1">Phone Number</label>
+                <label className="block text-sm font-medium text-gray-700">Phone Number</label>
                 <input
-                  type="text"
+                  type="tel"
                   value={editEmployeeForm.phoneNumber}
-                  onChange={(e) => setEditEmployeeForm({...editEmployeeForm, phoneNumber: e.target.value})}
-                  className="w-full p-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary transition"
+                  onChange={(e) => setEditEmployeeForm(prev => ({ ...prev, phoneNumber: e.target.value }))}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  required
                 />
               </div>
               <div>
-                <label className="block text-gray-700 text-sm font-semibold mb-1">Department</label>
+                <label className="block text-sm font-medium text-gray-700">Department</label>
                 <select
                   value={editEmployeeForm.department}
-                  onChange={(e) => setEditEmployeeForm({...editEmployeeForm, department: e.target.value})}
-                  className="w-full p-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary transition"
+                  onChange={(e) => setEditEmployeeForm(prev => ({ ...prev, department: e.target.value }))}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                   required
                 >
-                  <option value="">Select a department</option>
-                  {branches.map((branch) => (
-                    <option key={branch.code} value={branch.code}>
+                  <option value="">Select Department</option>
+                  {branches.map(branch => (
+                    <option key={branch._id} value={branch.code}>
                       {branch.name}
                     </option>
                   ))}
                 </select>
               </div>
               <div>
-                <label className="block text-gray-700 text-sm font-semibold mb-1">Status</label>
+                <label className="block text-sm font-medium text-gray-700">Status</label>
                 <select
                   value={editEmployeeForm.status}
-                  onChange={(e) => setEditEmployeeForm({...editEmployeeForm, status: e.target.value})}
-                  className="w-full p-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary transition"
+                  onChange={(e) => setEditEmployeeForm(prev => ({ ...prev, status: e.target.value }))}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                   required
                 >
                   <option value="active">Active</option>
                   <option value="inactive">Inactive</option>
                 </select>
               </div>
-              <div className="flex justify-end gap-3 mt-6">
+              <div className="flex items-center justify-between py-2">
+                <div className="flex flex-col">
+                  <span className="text-sm font-medium text-gray-700">Special Leave Permission</span>
+                  <span className="text-xs text-gray-500">
+                    Allows employee to apply for leaves up to 20 days
+                  </span>
+                </div>
                 <button
                   type="button"
-                  onClick={() => setShowEditEmployeeModal(false)}
-                  className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-semibold hover:bg-gray-300 transition"
+                  onClick={() => setEditEmployeeForm(prev => ({ 
+                    ...prev, 
+                    specialPermission: !prev.specialPermission 
+                  }))}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                    editEmployeeForm.specialPermission ? 'bg-blue-600' : 'bg-gray-200'
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      editEmployeeForm.specialPermission ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
+              </div>
+              <div className="flex justify-end space-x-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setEditingEmployee(null)}
+                  className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="bg-primary text-white px-5 py-2 rounded-lg font-semibold shadow hover:bg-primary-dark transition"
+                  className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
                 >
-                  Save Changes
+                  Update Employee
                 </button>
               </div>
             </form>

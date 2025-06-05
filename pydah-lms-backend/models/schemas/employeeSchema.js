@@ -65,6 +65,10 @@ const employeeSchema = new mongoose.Schema({
   designation: {
     type: String
   },
+  specialPermission: {
+    type: Boolean,
+    default: false
+  },
   role: {
     type: String,
     enum: [

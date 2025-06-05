@@ -1,7 +1,7 @@
 import React from 'react';
 import { DotLottieReact } from '@lottiefiles/dotlottie-react';
 
-const Loading = ({ message = "Processing your request...", size = "w-64 h-64", bg = "bg-white" }) => (
+const Loading = ({ message = "Processing your request...", size = "w-64 h-64 lg:w-96 lg:h-96", bg = "bg-white" }) => (
   <div className={`flex justify-center items-center h-screen ${bg}`}>
     <div className="flex flex-col items-center">
       <div className={`${size} flex items-center justify-center`}>

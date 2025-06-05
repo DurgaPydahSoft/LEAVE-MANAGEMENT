@@ -32,17 +32,16 @@ router.get('/faculty-list/:campus', authEmployee, async (req, res) => {
       return res.status(400).json({ message: 'Campus parameter is required' });
     }
 
-    // Find all faculty members in the specified campus (no department filter)
+    // Find all active employees in the specified campus (no role filter)
     const facultyList = await Employee.find({ 
       campus: campus.toLowerCase(),
-      status: 'active',
-      role: { $in: ['faculty', 'employee'] }
+      status: 'active'
     })
     .select('name employeeId department campus')
     .sort('name');
     
     if (!facultyList || facultyList.length === 0) {
-      return res.status(404).json({ message: 'No faculty members found for this campus' });
+      return res.status(404).json({ message: 'No employees found for this campus' });
     }
 
     res.json(facultyList);

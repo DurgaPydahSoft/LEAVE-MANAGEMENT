@@ -86,6 +86,19 @@ const LeaveApplicationForm = ({ onSubmit, onClose, employee, loading }) => {
     fetchFaculty();
   }, [employee]);
 
+  const getMaxEndDate = (startDate) => {
+    if (!startDate) return '';
+    const start = new Date(startDate);
+    const maxEnd = new Date(start);
+    // If employee has special permission, allow up to 20 days
+    if (employee?.specialPermission) {
+      maxEnd.setDate(start.getDate() + 19); // 20 days total (start + 19)
+    } else {
+      maxEnd.setDate(start.getDate() + 1); // 2 days total (start + 1)
+    }
+    return maxEnd.toISOString().split('T')[0];
+  };
+
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
     
@@ -106,32 +119,27 @@ const LeaveApplicationForm = ({ onSubmit, onClose, employee, loading }) => {
         ...prev,
         session: value
       }));
-    } else if (name === 'startDate' || name === 'endDate') {
-      const startDate = name === 'startDate' ? value : formData.startDate;
-      const endDate = name === 'endDate' ? value : formData.endDate;
-
-      if (startDate && endDate) {
-        const start = new Date(startDate);
-        const end = new Date(endDate);
-        
-        if (formData.isHalfDay && start.getTime() !== end.getTime()) {
-          toast.error('For half-day leave, start and end date must be the same');
-          return;
-        }
-
-        if (end < start) {
-          toast.error('End date cannot be before start date');
-          return;
-        }
-
-        setFormData(prev => ({
-          ...prev,
-          [name]: value,
-          numberOfDays: prev.isHalfDay ? 0.5 : Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1
-        }));
-      } else {
-        setFormData(prev => ({ ...prev, [name]: value }));
+    } else if (name === 'startDate') {
+      // If endDate is out of new range, reset it
+      const maxEnd = getMaxEndDate(value);
+      let newEndDate = formData.endDate;
+      if (newEndDate && (newEndDate < value || newEndDate > maxEnd)) {
+        newEndDate = '';
       }
+      setFormData(prev => ({
+        ...prev,
+        startDate: value,
+        endDate: newEndDate
+      }));
+    } else if (name === 'endDate') {
+      const startDate = formData.startDate;
+      const maxEnd = getMaxEndDate(startDate);
+      if (value < startDate || value > maxEnd) {
+        const maxDays = employee?.specialPermission ? 20 : 2;
+        toast.error(`End date must be within ${maxDays} days of start date`);
+        return;
+      }
+      setFormData(prev => ({ ...prev, endDate: value }));
     } else {
       setFormData(prev => ({ ...prev, [name]: value }));
     }
@@ -532,9 +540,16 @@ const LeaveApplicationForm = ({ onSubmit, onClose, employee, loading }) => {
                       value={formData.endDate}
                       onChange={handleInputChange}
                       min={formData.startDate || new Date().toISOString().split('T')[0]}
+                      max={getMaxEndDate(formData.startDate)}
                       className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                       required
+                      disabled={!formData.startDate}
                     />
+                    {formData.startDate && (
+                      <p className="text-xs text-gray-500 mt-1">
+                        End date can be at most {employee?.specialPermission ? '20' : '2'} days after start date.
+                      </p>
+                    )}
                   </div>
                 )}
               </div>

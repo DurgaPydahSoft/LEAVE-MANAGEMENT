@@ -1580,7 +1580,7 @@ exports.getCampusEmployees = async (req, res) => {
     });
 
     const employees = await Employee.find(query)
-      .select('name email employeeId department status phoneNumber designation role branchCode')
+      .select('name email employeeId department status phoneNumber designation role branchCode specialPermission')
       .sort({ name: 1 });
 
     console.log(`Found ${employees.length} employees for campus: ${campusType}`);
@@ -1960,7 +1960,7 @@ exports.updateEmployeeDetails = async (req, res) => {
     }
 
     // Allowed fields to update
-    const allowedFields = ['name', 'email', 'phoneNumber', 'status'];
+    const allowedFields = ['name', 'email', 'phoneNumber', 'status', 'specialPermission'];
     allowedFields.forEach(field => {
       if (updates[field] !== undefined) {
         employee[field] = updates[field];
