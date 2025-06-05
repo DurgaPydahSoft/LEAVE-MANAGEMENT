@@ -76,15 +76,15 @@ const LandingPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white overflow-x-hidden">
+    <div className="min-h-[100dvh] min-h-screen bg-white overflow-x-hidden">
       <PullToRefresh onRefresh={handleRefresh} />
       {/* Header with mobile menu */}
-      <header className={`fixed top-0 w-full z-50 transition-all duration-300 ${
+      <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         isScrolled 
           ? 'bg-white/95 backdrop-blur-md shadow-lg border-b border-primary/20' 
           : 'bg-white'
       }`}>
-        <div className="container mx-auto px-2 sm:px-4 py-2 md:py-4 flex items-center justify-between w-full">
+        <div className="container mx-auto px-2 sm:px-4 py-2 md:py-4 flex items-center justify-between">
           {/* Logo and Info Bar Section for mobile */}
           <div className="flex flex-col xs:flex-row xs:items-center space-y-1 xs:space-y-0 xs:space-x-2 sm:space-x-3 animate__animated animate__fadeInLeft w-full">
             <div className="flex items-center space-x-2">

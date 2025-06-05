@@ -14,9 +14,8 @@ import EmployeeRegister from "./pages/EmployeeRegister";
 import EmployeeDashboard from "./pages/EmployeeDashboard";
 import HodLogin from "./pages/HodLogin";
 import HodDashboard from "./pages/HodDashboard";
-import Header from "./components/Header";
-import Footer from "./components/Footer";
-import "./App.css";
+
+
 
 // Import HR components
 import HRLogin from './pages/HR/HRLogin';
