@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import HodLeaveForm from "../components/HodLeaveForm";
+
 import PasswordResetModal from "../components/PasswordResetModal";
 import RemarksModal from "../components/RemarksModal";
 import { toast } from 'react-toastify';
@@ -425,7 +425,7 @@ const HodDashboard = () => {
                           <div className="flex space-x-2">
                             <button
                               onClick={() => handleEditClick(employee)}
-                              className="text-indigo-600 hover:text-indigo-900"
+                              className="text-primary hover:text-indigo-900"
                             >
                               Edit
                             </button>
@@ -460,7 +460,7 @@ const HodDashboard = () => {
                     <div className="flex flex-col gap-2 mt-2">
             <button
                         onClick={() => handleEditClick(employee)}
-                        className="w-full bg-indigo-600 text-white py-2 rounded-md hover:bg-indigo-700 transition-colors text-sm"
+                        className="w-full bg-primary text-white py-2 rounded-md hover:bg-primary/20 transition-colors text-sm"
                       >
                         Edit
                       </button>
@@ -469,7 +469,7 @@ const HodDashboard = () => {
                           setSelectedEmployee(employee);
                           setShowPasswordResetModal(true);
                         }}
-                        className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition-colors text-sm"
+                        className="w-full bg-red-600 text-white py-2 rounded-md hover:bg-blue-700 transition-colors text-sm"
                       >
                         Reset Password
             </button>
@@ -500,13 +500,13 @@ const HodDashboard = () => {
                         <h3 className="text-lg font-semibold text-primary">
                           {leave.employee?.name || leave.employeeName || 'Unknown Employee'}
                     </h3>
-                        <p className="text-gray-600 text-sm">ID: {leave.employee?.employeeId || leave.employeeEmployeeId || 'N/A'}</p>
-                        <p className="text-gray-600 text-sm">
-                          {new Date(leave.startDate).toLocaleDateString()} - {new Date(leave.endDate).toLocaleDateString()}
-                        </p>
+                    <p className="font-mono  text-primary text-sm">Leave ID : {leave.leaveRequestId}</p>
+                        <p className="text-gray-600 text-sm">Employee ID: {leave.employee?.employeeId || leave.employeeEmployeeId || 'N/A'}</p>
+                        
                         <p className="text-gray-600 text-sm">
                           Type: {leave.type ? leave.type.charAt(0).toUpperCase() + leave.type.slice(1) : leave.leaveType ? leave.leaveType.charAt(0).toUpperCase() + leave.leaveType.slice(1) : 'N/A'}
                         </p>
+                        
                       </div>
                       <span className={`inline-block px-2 py-1 rounded-full text-xs font-semibold mt-1
                         ${leave.status === 'Approved' ? 'bg-green-100 text-green-800' :
@@ -539,6 +539,7 @@ const HodDashboard = () => {
                     </button>
                   </div>
                   <div className="space-y-3 sm:space-y-4">
+                    
                     {/* Employee Information */}
                     <div className="bg-gray-50 p-3 sm:p-4 rounded-lg">
                       <h4 className="font-semibold text-gray-900 mb-2">Employee Information</h4>
@@ -565,6 +566,10 @@ const HodDashboard = () => {
                     <div className="bg-gray-50 p-3 sm:p-4 rounded-lg">
                       <h4 className="font-semibold text-gray-900 mb-2">Leave Details</h4>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                      <div>
+                          <p className="text-sm text-gray-600">Request ID</p>
+                          <p className="font-mono text-base text-primary">{selectedLeave.leaveRequestId}</p>
+                        </div>
                         <div>
                           <p className="text-sm text-gray-600">Leave Type</p>
                           <p className="font-medium text-sm sm:text-base">
@@ -675,7 +680,6 @@ const HodDashboard = () => {
                       <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-4 mt-4 sm:mt-6">
                         <button
                           onClick={() => {
-                            setSelectedLeave(null);
                             setSelectedAction('forward');
                             setShowRemarksModal(true);
                           }}
@@ -685,7 +689,6 @@ const HodDashboard = () => {
                         </button>
                         <button
                           onClick={() => {
-                            setSelectedLeave(null);
                             setSelectedAction('reject');
                             setShowRemarksModal(true);
                           }}
@@ -953,6 +956,15 @@ const HodDashboard = () => {
             </div>
           </div>
         </div>
+      )}
+      {/* Leave Forward/Reject Remarks Modal */}
+      {showRemarksModal && (
+        <RemarksModal
+          show={showRemarksModal}
+          onClose={() => setShowRemarksModal(false)}
+          onSubmit={handleRemarksSubmit}
+          action={selectedAction}
+        />
       )}
     </div>
   );

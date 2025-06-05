@@ -5,12 +5,10 @@ import config from '../config';
 const API_BASE_URL = config.API_BASE_URL;
 
 const LEAVE_TYPES = [
-  { code: 'CL', label: 'Casual Leave' },
-  { code: 'CCL', label: 'Cost Casual Leave' },
-  { code: 'Medical', label: 'Medical Leave' },
-  { code: 'Maternity', label: 'Maternity Leave' },
-  { code: 'OD', label: 'On Duty' },
-  { code: 'Others', label: 'Other Leave' }
+  { code: 'CL', label: 'CL' },
+  { code: 'CCL', label: 'CCL' },
+  { code: 'OD', label: 'OD' },
+  
 ];
 
 const PERIODS = [1, 2, 3, 4, 5, 6, 7];
@@ -78,7 +76,6 @@ const LeaveApplicationForm = ({ onSubmit, onClose, employee, loading }) => {
         const data = await response.json();
         setFacultyList(data.filter(f => 
           f.campus === employee.campus && 
-          f.department === employee.department &&
           f._id !== employee._id
         ));
       } catch (error) {
@@ -654,7 +651,7 @@ const LeaveApplicationForm = ({ onSubmit, onClose, employee, loading }) => {
                     >
                       <option value="">Select Faculty</option>
                       {facultyList.map(faculty => (
-                        <option key={faculty._id} value={faculty._id}>{faculty.name}</option>
+                        <option key={faculty._id} value={faculty._id}>{faculty.name + ' - ' + faculty.department}</option>
                       ))}
                     </select>
                   </div>

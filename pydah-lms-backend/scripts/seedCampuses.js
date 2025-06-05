@@ -5,19 +5,27 @@ require('dotenv').config();
 const campuses = [
   {
     name: 'engineering',
-    displayName: 'PYDAH Engineering College'
+    displayName: 'PYDAH Engineering College',
+    type: 'Engineering',
+    location: 'Visakhapatnam'
   },
   {
     name: 'degree',
-    displayName: 'PYDAH Degree College'
+    displayName: 'PYDAH Degree College',
+    type: 'Degree',
+    location: 'Visakhapatnam'
   },
   {
     name: 'pharmacy',
-    displayName: 'PYDAH College of Pharmacy'
+    displayName: 'PYDAH College of Pharmacy',
+    type: 'Pharmacy',
+    location: 'Visakhapatnam'
   },
   {
     name: 'diploma',
-    displayName: 'PYDAH Polytechnic College'
+    displayName: 'PYDAH Polytechnic College',
+    type: 'Diploma',
+    location: 'Visakhapatnam'
   }
 ];
 
@@ -42,6 +50,8 @@ const seedCampuses = async () => {
         const newCampus = new Campus({
           name: campus.name,
           displayName: campus.displayName,
+          type: campus.type,
+          location: campus.location,
           isActive: true
         });
         await newCampus.save();

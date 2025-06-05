@@ -3,7 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "dependencies": {
+    "@emotion/styled": "^11.14.0",
     "@heroicons/react": "^2.2.0",
+    "@mui/icons-material": "^7.1.1",
     "@mui/material": "^7.1.0",
     "animate.css": "^4.1.1",
     "aos": "^2.3.4",
@@ -29,6 +31,7 @@
     "stream-http": "^3.2.0",
     "url": "^0.11.4",
     "util": "^0.12.5",
+    "xlsx": "^0.18.5",
     "xlsx-js-style": "^1.2.0"
   },
   "scripts": {

@@ -63,13 +63,28 @@ const employeeSchema = new mongoose.Schema({
     required: true
   },
   designation: {
-    type: String,
-    required: true
+    type: String
   },
   role: {
     type: String,
-    enum: ['faculty', 'employee'],
+    enum: [
+      'associate_professor',
+      'assistant_professor',
+      'lab_incharge',
+      'lab_assistant',
+      'technician',
+      'librarian',
+      'pet',
+      'senior_lecturer',
+      'lecturer',
+      'faculty',
+      'other'
+    ],
     default: 'faculty'
+  },
+  roleDisplayName: {
+    type: String,
+    required: true
   },
   department: {
     type: String,
@@ -131,10 +146,15 @@ const employeeSchema = new mongoose.Schema({
     ref: 'CCLWorkRequest'
   }],
   leaveRequests: [{
+    leaveRequestId: {
+      type: String,
+      unique: false,
+      required: true
+    },
     leaveType: {
       type: String,
       required: true,
-      enum: ['CL', 'CCL', 'Medical', 'Maternity', 'OD', 'Others']
+      enum: ['CL', 'CCL', 'OD']
     },
     isHalfDay: {
       type: Boolean,
@@ -376,5 +396,67 @@ employeeSchema.pre('save', async function(next) {
     next(error);
   }
 });
+
+// Add pre-save middleware to generate leaveRequestId for new leave requests
+employeeSchema.pre('save', async function(next) {
+  if (!this.isModified('leaveRequests')) {
+    return next();
+  }
+
+  try {
+    // Get the latest leave request
+    const latestLeaveRequest = this.leaveRequests[this.leaveRequests.length - 1];
+    if (!latestLeaveRequest) {
+      return next();
+    }
+    // Only generate if not already present
+    if (!latestLeaveRequest.leaveRequestId) {
+      const currentYear = new Date().getFullYear();
+      const department = this.department;
+      const leaveType = latestLeaveRequest.leaveType;
+      // Find the highest sequence number for this type/year/department
+      let maxSeq = 0;
+      this.leaveRequests.forEach(lr => {
+        if (
+          lr.leaveRequestId &&
+          lr.leaveRequestId.startsWith(`${leaveType}${currentYear}${department}`)
+        ) {
+          const seq = parseInt(lr.leaveRequestId.slice(-4));
+          if (!isNaN(seq) && seq > maxSeq) maxSeq = seq;
+        }
+      });
+      const nextSeq = (maxSeq + 1).toString().padStart(4, '0');
+      latestLeaveRequest.leaveRequestId = `${leaveType}${currentYear}${department}${nextSeq}`;
+    }
+    next();
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Add static method for role/campus validation
+employeeSchema.statics.validateRoleForCampus = function(campus, role) {
+  const validRoles = {
+    engineering: [
+      'associate_professor', 'assistant_professor', 'lab_incharge', 'lab_assistant', 'technician', 'librarian', 'pet', 'other'
+    ],
+    diploma: [
+      'senior_lecturer', 'lecturer', 'lab_incharge', 'lab_assistant', 'technician', 'other'
+    ],
+    pharmacy: [
+      'associate_professor', 'assistant_professor', 'lab_incharge', 'lab_assistant', 'technician', 'other'
+    ],
+    degree: [
+      'associate_professor', 'assistant_professor', 'lab_incharge', 'lab_assistant', 'technician', 'other'
+    ]
+  };
+  if (!validRoles[campus]) {
+    throw new Error('Invalid campus type');
+  }
+  if (!validRoles[campus].includes(role)) {
+    throw new Error(`Invalid role for ${campus} campus`);
+  }
+  return true;
+};
 
 module.exports = employeeSchema; 

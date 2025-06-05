@@ -8,10 +8,8 @@ exports.validateEmail = (email) => {
 exports.validatePassword = (password, role) => {
   // Skip validation for principals
   if (role === 'principal') return true;
-  
-  // For other roles, enforce password requirements
-  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
-  return passwordRegex.test(password);
+  // For other roles, only require minimum length 6
+  return typeof password === 'string' && password.length >= 6;
 };
 
 // Campus validation

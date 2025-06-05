@@ -1,6 +1,5 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
-const { BRANCH_OPTIONS } = require('../../config/branchOptions');
 
 const hodSchema = new mongoose.Schema({
   name: {
@@ -12,6 +11,10 @@ const hodSchema = new mongoose.Schema({
     required: true,
     unique: true,
     lowercase: true
+  },
+  phoneNumber: {
+    type: String,
+    required: false
   },
   password: {
     type: String,
@@ -75,37 +78,17 @@ const hodSchema = new mongoose.Schema({
     ref: 'LeaveRequest'
   }],
   leaveBalance: { type: Number, default: 12 },
-  hodLeaveRequests: [
-    {
-      _id: { type: mongoose.Schema.Types.ObjectId, auto: true },
-      leaveType: { type: String, required: true },
-      startDate: Date,
-      endDate: Date,
-      reason: String,
-      status: { type: String, default: "Pending" },
-      alternateSchedule: [
-        { periodNumber: Number, lecturerName: String, classAssigned: String }
-      ]
-    }
-  ]
+ 
 }, {
   timestamps: true
 });
 
-// Validate department code based on campus type
+// Validate department code based on campus type and branches
 hodSchema.pre('save', async function(next) {
   try {
     if (!this.isNew && !this.isModified('department')) return next();
 
     this.department.campusType = this.department.campusType.charAt(0).toUpperCase() + this.department.campusType.slice(1);
-
-    if (!BRANCH_OPTIONS[this.department.campusType]) {
-      throw new Error(`Invalid campus type: ${this.department.campusType}`);
-    }
-
-    if (!BRANCH_OPTIONS[this.department.campusType].includes(this.department.code)) {
-      throw new Error(`Invalid department code ${this.department.code} for campus type ${this.department.campusType}`);
-    }
 
     let principal;
     if (this.campusModel === 'User') {
@@ -121,6 +104,25 @@ hodSchema.pre('save', async function(next) {
     
     if (!principal) {
       throw new Error(`Principal not found in ${this.campusModel} model`);
+    }
+
+    // Get the campus document
+    const campus = await mongoose.model('Campus').findOne({
+      principalId: principal._id,
+      type: this.department.campusType
+    });
+
+    if (!campus) {
+      throw new Error(`Campus not found for type ${this.department.campusType}`);
+    }
+
+    // Check if the department code exists in the campus's branches
+    const branchExists = campus.branches.some(branch => 
+      branch.code === this.department.code && branch.isActive
+    );
+
+    if (!branchExists) {
+      throw new Error(`Invalid department code ${this.department.code} for campus type ${this.department.campusType}`);
     }
 
     let principalCampusType;

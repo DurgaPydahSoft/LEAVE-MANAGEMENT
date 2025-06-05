@@ -109,13 +109,36 @@ const addLeaveRequest = async (req, res) => {
     );
 
     if (existingRequest) {
-            return res.status(400).json({ 
+      return res.status(400).json({ 
         msg: 'A pending leave request already exists for these dates' 
-            });
+      });
     }
 
     // Create new leave request
+    // Generate leaveRequestId (global per leaveType, year, across all departments)
+    const currentYear = new Date().getFullYear();
+    const department = employee.department;
+    // Find the highest sequence number for this type/year across all employees (ignore department)
+    const allEmployees = await Employee.find({}, { leaveRequests: 1 });
+    let maxSeq = 0;
+    allEmployees.forEach(emp => {
+      (emp.leaveRequests || []).forEach(lr => {
+        if (
+          lr.leaveType === leaveType &&
+          lr.startDate && lr.startDate.startsWith(currentYear.toString()) &&
+          lr.leaveRequestId &&
+          lr.leaveRequestId.startsWith(`${leaveType}${currentYear}`)
+        ) {
+          const seq = parseInt(lr.leaveRequestId.slice(-4));
+          if (!isNaN(seq) && seq > maxSeq) maxSeq = seq;
+        }
+      });
+    });
+    const nextSeq = (maxSeq + 1).toString().padStart(4, '0');
+    const leaveRequestId = `${leaveType}${currentYear}${department}${nextSeq}`;
+
     const newLeaveRequest = {
+      leaveRequestId,
       leaveType,
       isHalfDay: isHalfDay || false,
       session: isHalfDay ? session : undefined,
@@ -149,9 +172,12 @@ const addLeaveRequest = async (req, res) => {
     // Save employee document
     await employee.save();
 
+    // Get the saved leave request with the generated ID
+    const savedLeaveRequest = employee.leaveRequests[employee.leaveRequests.length - 1];
+
     res.status(201).json({
       msg: 'Leave request submitted successfully',
-      leaveRequest: newLeaveRequest
+      leaveRequest: savedLeaveRequest
     });
   } catch (error) {
     console.error('Add Leave Request Error:', error);

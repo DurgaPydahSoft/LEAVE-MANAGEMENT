@@ -1,7 +1,6 @@
-const { Employee } = require('../models');
+const { Employee, Campus } = require('../models');
 const jwt = require('jsonwebtoken');
 const { validateEmail } = require('../utils/validators');
-const { BRANCH_OPTIONS } = require('../config/branchOptions');
 
 // Employee Registration
 exports.register = async (req, res) => {
@@ -64,24 +63,29 @@ exports.register = async (req, res) => {
     console.log('Campus validation:', {
       receivedCampus: campus,
       normalizedCampusType: campusType,
-      availableBranches: BRANCH_OPTIONS[campusType],
       department
     });
 
-    if (!BRANCH_OPTIONS[campusType]) {
+    // Find the campus and check if it exists
+    const campusDoc = await Campus.findOne({ name: campus.toLowerCase() });
+    if (!campusDoc) {
       console.log('Invalid campus selected:', {
         campus,
-        campusType,
-        validOptions: Object.keys(BRANCH_OPTIONS)
+        campusType
       });
       return res.status(400).json({ msg: 'Invalid campus selected' });
     }
 
-    if (!BRANCH_OPTIONS[campusType].includes(department)) {
+    // Check if the department exists in the campus's branches
+    const branchExists = campusDoc.branches.some(branch => 
+      branch.code === department && branch.isActive
+    );
+
+    if (!branchExists) {
       console.log('Invalid department for campus:', {
         department,
         campus: campusType,
-        validDepartments: BRANCH_OPTIONS[campusType]
+        validBranches: campusDoc.branches.map(b => b.code)
       });
       return res.status(400).json({ msg: 'Invalid department for selected campus' });
     }

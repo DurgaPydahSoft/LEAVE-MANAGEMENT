@@ -205,6 +205,21 @@ exports.createHOD = async (req, res) => {
 
     const savedHOD = await hod.save();
 
+    // Assign HOD to branch in campus document
+    let campusDoc;
+    if (isUserModel) {
+      campusDoc = await Campus.findOne({ name: principal.campus.toLowerCase() });
+    } else {
+      campusDoc = await Campus.findOne({ type: principal.campus.type });
+    }
+    if (campusDoc) {
+      const branch = campusDoc.branches.find(b => b.code === department.code);
+      if (branch) {
+        branch.hodId = savedHOD._id;
+        await campusDoc.save();
+      }
+    }
+
     res.status(201).json({
       msg: 'HOD created successfully',
       hod: {
@@ -855,20 +870,21 @@ exports.updateLeaveRequest = async (req, res) => {
             msg: `Insufficient CCL balance. Available: ${employee.cclBalance} days, Required: ${daysToDeduct} days`
           });
         }
-      } else {
-        // For all other leave types, check regular leave balance
-        if (employee.leaveBalance < leaveRequest.numberOfDays) {
-          console.log('Insufficient leave balance:', {
-            employeeId: employee._id,
-            employeeName: employee.name,
-            requestedDays: leaveRequest.numberOfDays,
-            availableBalance: employee.leaveBalance
-          });
-          return res.status(400).json({ 
-            msg: `Insufficient leave balance. Available: ${employee.leaveBalance} days, Required: ${leaveRequest.numberOfDays} days`
-          });
-        }
+      } else if (leaveRequest.leaveType === 'CL') {
+        // For CL, deduct from regular leave balance
+        employee.leaveBalance -= leaveRequest.numberOfDays;
+        // Add to leave history
+        employee.leaveHistory = employee.leaveHistory || [];
+        employee.leaveHistory.push({
+          type: 'used',
+          date: new Date(),
+          days: leaveRequest.numberOfDays,
+          reference: leaveRequest._id,
+          referenceModel: 'LeaveRequest',
+          remarks: 'CL leave approved by Principal'
+        });
       }
+      // For OD, no balance deduction needed
 
       // Update leave request status
       leaveRequest.status = 'Approved';
@@ -888,8 +904,8 @@ exports.updateLeaveRequest = async (req, res) => {
           'LeaveRequest',
           `CCL leave approved by Principal${leaveRequest.isHalfDay ? ' (Half-day)' : ''}`
         );
-      } else {
-        // For all other leave types (CL, EL, ML, etc.), deduct from regular leave balance
+      } else if (leaveRequest.leaveType === 'CL') {
+        // For CL, deduct from regular leave balance
         employee.leaveBalance -= leaveRequest.numberOfDays;
         // Add to leave history
         employee.leaveHistory = employee.leaveHistory || [];
@@ -899,7 +915,7 @@ exports.updateLeaveRequest = async (req, res) => {
           days: leaveRequest.numberOfDays,
           reference: leaveRequest._id,
           referenceModel: 'LeaveRequest',
-          remarks: `${leaveRequest.leaveType} leave approved by Principal`
+          remarks: 'CL leave approved by Principal'
         });
       }
 
@@ -1143,8 +1159,22 @@ exports.updateHodDetails = async (req, res) => {
       }
     });
 
+    // Validate department update: only allow if it's an object with a non-empty code
+    if (
+      updates.department &&
+      (
+        typeof updates.department !== 'object' ||
+        !updates.department.code ||
+        typeof updates.department.code !== 'string' ||
+        updates.department.code.trim() === ''
+      )
+    ) {
+      delete updates.department;
+    }
+
     // Update HOD
     let updatedHod;
+    let previousDepartmentCode;
     if (model === 'User') {
       updatedHod = await User.findByIdAndUpdate(
         hodId,
@@ -1152,11 +1182,32 @@ exports.updateHodDetails = async (req, res) => {
         { new: true }
       ).select('-password');
     } else {
+      // Get the previous department code before update
+      previousDepartmentCode = hod.department.code;
       updatedHod = await HOD.findByIdAndUpdate(
         hodId,
         { $set: updates },
         { new: true }
       ).select('-password');
+    }
+
+    // If department was changed, update campus branch hodId fields
+    if (model !== 'User' && updates.department && updates.department.code && previousDepartmentCode !== updates.department.code) {
+      // Find the campus document
+      const campus = await Campus.findOne({ principalId: req.user.id });
+      if (campus) {
+        // Clear old branch's hodId
+        const oldBranch = campus.branches.find(b => b.code === previousDepartmentCode);
+        if (oldBranch && oldBranch.hodId && oldBranch.hodId.toString() === hodId) {
+          oldBranch.hodId = null;
+        }
+        // Set new branch's hodId
+        const newBranch = campus.branches.find(b => b.code === updates.department.code);
+        if (newBranch) {
+          newBranch.hodId = hodId;
+        }
+        await campus.save();
+      }
     }
 
     res.json({
@@ -1484,7 +1535,21 @@ exports.getCampusEmployees = async (req, res) => {
 
     // Build query
     let query = {
-      role: { $in: ['faculty', 'employee'] },
+      role: {
+        $in: [
+          // Engineering roles
+          'associate_professor',
+          'assistant_professor',
+          'lab_incharge',
+          'technician',
+          // Diploma roles
+          'senior_lecturer',
+          'junior_lecturer',
+          // Common roles
+          'faculty',
+          'employee'
+        ]
+      },
       campus: campusType
     };
 
@@ -1741,5 +1806,180 @@ exports.updateCCLWorkRequestStatus = async (req, res) => {
       success: false,
       message: error.message || 'Server error'
     });
+  }
+};
+
+// Create Branch for Campus
+exports.createBranch = async (req, res) => {
+  try {
+    const principalId = req.user.id;
+    const { name, code } = req.body;
+    if (!name || !code) {
+      return res.status(400).json({ msg: 'Branch name and code are required' });
+    }
+    // Find campus for this principal
+    const campus = await Campus.findOne({ principalId });
+    if (!campus) {
+      return res.status(404).json({ msg: 'Campus not found' });
+    }
+    // Check for duplicate branch code
+    const exists = campus.branches.some(
+      branch => branch.code.toUpperCase() === code.toUpperCase()
+    );
+    if (exists) {
+      return res.status(400).json({ msg: 'Branch code already exists in this campus' });
+    }
+    // Add new branch
+    campus.branches.push({
+      name,
+      code: code.toUpperCase(),
+      isActive: true
+    });
+    await campus.save();
+    res.status(201).json({ msg: 'Branch created successfully', branches: campus.branches });
+  } catch (error) {
+    console.error('Create Branch Error:', error);
+    res.status(500).json({ msg: error.message || 'Server error' });
+  }
+};
+
+// List all branches for the principal's campus
+exports.listBranches = async (req, res) => {
+  try {
+    const principalId = req.user.id;
+    const campus = await Campus.findOne({ principalId });
+    if (!campus) {
+      return res.status(404).json({ msg: 'Campus not found' });
+    }
+    res.json({ branches: campus.branches });
+  } catch (error) {
+    console.error('List Branches Error:', error);
+    res.status(500).json({ msg: error.message || 'Server error' });
+  }
+};
+
+// Edit a branch for the principal's campus
+exports.editBranch = async (req, res) => {
+  try {
+    const principalId = req.user.id;
+    const { branchId } = req.params;
+    const { name, code, isActive } = req.body;
+    const campus = await Campus.findOne({ principalId });
+    if (!campus) {
+      return res.status(404).json({ msg: 'Campus not found' });
+    }
+    const branch = campus.branches.id(branchId);
+    if (!branch) {
+      return res.status(404).json({ msg: 'Branch not found' });
+    }
+    if (name) branch.name = name;
+    if (code) branch.code = code.toUpperCase();
+    if (typeof isActive === 'boolean') branch.isActive = isActive;
+    await campus.save();
+    res.json({ msg: 'Branch updated successfully', branch });
+  } catch (error) {
+    console.error('Edit Branch Error:', error);
+    res.status(500).json({ msg: error.message || 'Server error' });
+  }
+};
+
+// Delete a branch from the campus
+exports.deleteBranch = async (req, res) => {
+  try {
+    const principalId = req.user.id;
+    let campusDoc;
+    if (req.user.modelType === 'User') {
+      const principal = await User.findOne({ _id: principalId, role: 'principal' });
+      if (!principal) return res.status(404).json({ msg: 'Principal not found' });
+      campusDoc = await Campus.findOne({ name: principal.campus.toLowerCase() });
+    } else {
+      const principal = await Principal.findById(principalId);
+      if (!principal) return res.status(404).json({ msg: 'Principal not found' });
+      campusDoc = await Campus.findOne({ type: principal.campus.type });
+    }
+    if (!campusDoc) return res.status(404).json({ msg: 'Campus not found' });
+
+    const { branchId } = req.params;
+    const branchIndex = campusDoc.branches.findIndex(b => b._id.toString() === branchId);
+    if (branchIndex === -1) {
+      return res.status(404).json({ msg: 'Branch not found' });
+    }
+    const deletedBranch = campusDoc.branches[branchIndex];
+    const branchCode = deletedBranch.code;
+    const campusName = campusDoc.name;
+    campusDoc.branches.splice(branchIndex, 1);
+    await campusDoc.save();
+
+    // Cascade delete HODs and Employees
+    const hodDeleteResult = await HOD.deleteMany({
+      'department.code': branchCode,
+      'department.campusType': campusDoc.type
+    });
+    const employeeDeleteResult = await Employee.deleteMany({
+      branchCode: branchCode,
+      campus: campusName
+    });
+
+    res.json({
+      msg: 'Branch deleted successfully',
+      deletedHODs: hodDeleteResult.deletedCount,
+      deletedEmployees: employeeDeleteResult.deletedCount
+    });
+  } catch (error) {
+    console.error('Delete Branch Error:', error);
+    res.status(500).json({ msg: error.message || 'Server error' });
+  }
+};
+
+// Update Employee Details (Principal)
+exports.updateEmployeeDetails = async (req, res) => {
+  try {
+    const employeeId = req.params.id;
+    const updates = req.body;
+
+    // Find employee
+    const employee = await Employee.findById(employeeId);
+    if (!employee) {
+      return res.status(404).json({ msg: 'Employee not found' });
+    }
+
+    // Get principal's campus type
+    let principal;
+    let campusType;
+    if (req.user.modelType === 'User') {
+      principal = await User.findOne({ _id: req.user.id, role: 'principal' });
+      campusType = principal.campus.toLowerCase();
+    } else {
+      principal = await Principal.findById(req.user.id);
+      campusType = principal.campus.type.toLowerCase();
+    }
+
+    // Check campus match
+    if (employee.campus.toLowerCase() !== campusType) {
+      return res.status(403).json({ msg: 'Not authorized to update this employee' });
+    }
+
+    // Allowed fields to update
+    const allowedFields = ['name', 'email', 'phoneNumber', 'status'];
+    allowedFields.forEach(field => {
+      if (updates[field] !== undefined) {
+        employee[field] = updates[field];
+      }
+    });
+    // Department/branchCode
+    if (updates.department) {
+      employee.branchCode = updates.department;
+      employee.department = updates.department; // Ensure department is a string for HOD dashboard compatibility
+      // Optionally update department object if your schema uses it
+      if (employee.department && typeof employee.department === 'object') {
+        employee.department.code = updates.department;
+      }
+    }
+
+    await employee.save();
+    res.json(employee);
+  } catch (error) {
+    console.error('Principal update employee error:', error);
+    res.status(500).json({ msg: error.message || 'Server error' });
   }
 }; 

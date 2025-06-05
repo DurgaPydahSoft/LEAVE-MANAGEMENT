@@ -4,7 +4,7 @@ const { authEmployee } = require('../middleware/auth');
 const employeeAuthController = require('../controllers/employeeAuthController');
 const employeeDashboardController = require('../controllers/employeeDashboardController');
 const employeeController = require("../controllers/employeeController.js");
-const { Employee } = require('../models');
+const { Employee, Campus } = require('../models');
 
 // Debug middleware for employee routes
 router.use((req, res, next) => {
@@ -32,7 +32,7 @@ router.get('/faculty-list/:campus', authEmployee, async (req, res) => {
       return res.status(400).json({ message: 'Campus parameter is required' });
     }
 
-    // Find all faculty members in the specified campus
+    // Find all faculty members in the specified campus (no department filter)
     const facultyList = await Employee.find({ 
       campus: campus.toLowerCase(),
       status: 'active',
@@ -193,6 +193,20 @@ router.post('/check-faculty-availability', authEmployee, async (req, res) => {
       isAvailable: false, 
       message: 'Error checking faculty availability' 
     });
+  }
+});
+
+// Public: Get active branches for a campus
+router.get('/branches', async (req, res) => {
+  try {
+    const { campus } = req.query;
+    if (!campus) return res.status(400).json({ msg: 'Campus is required' });
+    const campusDoc = await Campus.findOne({ name: campus.toLowerCase() });
+    if (!campusDoc) return res.status(404).json({ msg: 'Campus not found' });
+    const activeBranches = (campusDoc.branches || []).filter(b => b.isActive);
+    res.json({ branches: activeBranches });
+  } catch (error) {
+    res.status(500).json({ msg: error.message || 'Server error' });
   }
 });
 

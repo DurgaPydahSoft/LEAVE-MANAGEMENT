@@ -9,6 +9,7 @@ const superAdminSchema = require('./schemas/superAdminSchema');
 const campusSchema = require('./schemas/campusSchema');
 const leaveRequestSchema = require('./schemas/leaveRequestSchema');
 const cclWorkRequestSchema = require('./CCLWorkRequest').schema;
+const hrSchema = require('./schemas/hrSchema');
 
 // Register models only if they haven't been registered
 const User = mongoose.models.User || mongoose.model('User', userSchema);
@@ -19,6 +20,7 @@ const SuperAdmin = mongoose.models.SuperAdmin || mongoose.model('SuperAdmin', su
 const Campus = mongoose.models.Campus || mongoose.model('Campus', campusSchema);
 const LeaveRequest = mongoose.models.LeaveRequest || mongoose.model('LeaveRequest', leaveRequestSchema);
 const CCLWorkRequest = mongoose.models.CCLWorkRequest || mongoose.model('CCLWorkRequest', cclWorkRequestSchema);
+const HR = mongoose.models.HR || mongoose.model('HR', hrSchema);
 
 module.exports = {
   User,
@@ -28,5 +30,6 @@ module.exports = {
   SuperAdmin,
   Campus,
   LeaveRequest,
-  CCLWorkRequest
+  CCLWorkRequest,
+  HR
 }; 

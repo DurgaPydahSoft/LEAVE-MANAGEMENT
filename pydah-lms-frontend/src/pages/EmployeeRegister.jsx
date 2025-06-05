@@ -2,11 +2,21 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import axios from 'axios';
-import { BRANCH_OPTIONS } from '../config/branchOptions';
 import config from '../config';
 
 // Base URL for all API calls
 const API_BASE_URL = config.API_BASE_URL;
+
+// Add a hook to detect if the screen is mobile
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 640);
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 640);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+  return isMobile;
+}
 
 const EmployeeRegister = () => {
   const navigate = useNavigate();
@@ -22,7 +32,7 @@ const EmployeeRegister = () => {
     department: ''
   });
 
-  const [departments, setDepartments] = useState([]);
+  const [branches, setBranches] = useState([]);
   const [loading, setLoading] = useState(false);
 
   const campuses = [
@@ -32,18 +42,32 @@ const EmployeeRegister = () => {
     { value: 'diploma', label: 'Diploma' }
   ];
 
-  // Update departments based on selected campus
+  const isMobile = useIsMobile();
+
+  // Fetch branches when campus changes
   useEffect(() => {
-    if (formData.campus) {
-      const campusType = formData.campus.charAt(0).toUpperCase() + formData.campus.slice(1);
-      const departmentList = BRANCH_OPTIONS[campusType] || [];
-      setDepartments(departmentList);
-      
-      // Reset department selection if campus changes
-      if (formData.department && !departmentList.includes(formData.department)) {
-        setFormData(prev => ({ ...prev, department: '' }));
+    const fetchBranches = async () => {
+      if (!formData.campus) {
+        setBranches([]);
+        return;
       }
-    }
+      try {
+        // Use the new backend endpoint for employee registration
+        const response = await axios.get(
+          `${API_BASE_URL}/employee/branches?campus=${formData.campus}`
+        );
+        // Only show active branches
+        const activeBranches = (response.data.branches || []).filter(b => b.isActive);
+        setBranches(activeBranches);
+        // Reset department if not in new list
+        if (formData.department && !activeBranches.some(b => b.code === formData.department)) {
+          setFormData(prev => ({ ...prev, department: '' }));
+        }
+      } catch (error) {
+        setBranches([]);
+      }
+    };
+    fetchBranches();
   }, [formData.campus]);
 
   const handleChange = (e) => {
@@ -56,32 +80,26 @@ const EmployeeRegister = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
     // Validate passwords match
     if (formData.password !== formData.confirmPassword) {
       toast.error('Passwords do not match');
       return;
     }
-
     // Validate phone number
     const phoneRegex = /^[0-9]{10}$/;
     if (!phoneRegex.test(formData.phoneNumber)) {
       toast.error('Please enter a valid 10-digit phone number');
       return;
     }
-
     // Validate campus and department
-    const campusType = formData.campus.charAt(0).toUpperCase() + formData.campus.slice(1);
-    if (!BRANCH_OPTIONS[campusType]) {
-      toast.error('Invalid campus selected');
+    if (!formData.campus) {
+      toast.error('Please select a campus');
       return;
     }
-
-    if (!BRANCH_OPTIONS[campusType].includes(formData.department)) {
+    if (!branches.some(b => b.code === formData.department)) {
       toast.error('Invalid department for selected campus');
       return;
     }
-
     setLoading(true);
     try {
       const response = await axios.post(`${API_BASE_URL}/employee/register`, {
@@ -98,19 +116,14 @@ const EmployeeRegister = () => {
           'Content-Type': 'application/json'
         }
       });
-
-      console.log('Registration response:', response.data);
-
       if (response.data) {
         toast.success('Registration successful! Please login with your Employee ID and password.');
-        // Store the employeeId temporarily to auto-fill in login
         sessionStorage.setItem('lastRegisteredId', formData.employeeId);
         setTimeout(() => {
           navigate('/employee-login');
         }, 2000);
       }
     } catch (error) {
-      console.error('Registration error:', error.response?.data || error);
       const errorMessage = error.response?.data?.msg || 'Registration failed. Please try again.';
       toast.error(errorMessage);
     } finally {
@@ -291,20 +304,17 @@ const EmployeeRegister = () => {
                   </svg>
                 </div>
                 <select
+                  id="department"
                   name="department"
                   value={formData.department}
                   onChange={handleChange}
+                  className="w-full p-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary transition"
                   required
-                  disabled={!formData.campus}
-                  className="w-full pl-8 sm:pl-10 p-2 sm:p-3 rounded-neumorphic bg-secondary shadow-innerSoft 
-                           focus:outline-none text-xs sm:text-base border border-gray-300 
-                           focus:border-primary transition-colors duration-300
-                           disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <option value="">Select Department</option>
-                  {departments.map(dept => (
-                    <option key={dept} value={dept}>
-                      {dept.replace(/_/g, ' ')}
+                  <option value="">Select a branch</option>
+                  {branches.map(branch => (
+                    <option key={branch._id || branch.code} value={branch.code}>
+                      {isMobile ? branch.code : `${branch.name} (${branch.code})`}
                     </option>
                   ))}
                 </select>

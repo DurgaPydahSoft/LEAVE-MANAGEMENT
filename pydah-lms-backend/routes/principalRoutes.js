@@ -18,7 +18,12 @@ const {
   getCampusEmployees,
   registerPrincipal,
   getCCLWorkRequests,
-  updateCCLWorkRequestStatus
+  updateCCLWorkRequestStatus,
+  createBranch,
+  listBranches,
+  editBranch,
+  deleteBranch,
+  updateEmployeeDetails
 } = require('../controllers/principalController');
 
 // Public routes
@@ -39,6 +44,7 @@ router.post('/hods/:hodId/reset-password', resetHodPassword);
 
 // Employee management routes
 router.get('/employees', getCampusEmployees);
+router.put('/employees/:id', updateEmployeeDetails);
 
 // Leave management routes
 router.get('/campus-leaves', getCampusLeaves);
@@ -53,5 +59,11 @@ router.get('/campus-stats', getCampusStats);
 // CCL work request routes
 router.get('/ccl-work-requests', getCCLWorkRequests);
 router.put('/ccl-work-requests/:workId', updateCCLWorkRequestStatus);
+
+// Branch management routes
+router.post('/branches', createBranch);
+router.get('/branches', listBranches);
+router.put('/branches/:branchId', editBranch);
+router.delete('/branches/:branchId', deleteBranch);
 
 module.exports = router; 

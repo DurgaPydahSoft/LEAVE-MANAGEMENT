@@ -8,7 +8,7 @@ const asyncHandler = require('express-async-handler');
 // Register HOD
 const registerHod = async (req, res) => {
   try {
-    const { name, email, password, department, HODId } = req.body;
+    const { name, email, password, department, HODId, phoneNumber } = req.body;
     
     // Check if email already exists
     let hodWithEmail = await HOD.findOne({ email });
@@ -38,6 +38,7 @@ const registerHod = async (req, res) => {
       password: hashedPassword,
       department,
       HODId,
+      phoneNumber,
       status: 'active'
     });
     
@@ -290,7 +291,7 @@ const getProfile = async (req, res) => {
 const updateProfile = async (req, res) => {
   try {
     const hodId = req.user.id;
-    const { name, email } = req.body;
+    const { name, email, phoneNumber } = req.body;
 
     const updates = {};
     if (name) updates.name = name;
@@ -300,6 +301,7 @@ const updateProfile = async (req, res) => {
       }
       updates.email = email;
     }
+    if (phoneNumber) updates.phoneNumber = phoneNumber;
 
     const hod = await User.findByIdAndUpdate(
       hodId,

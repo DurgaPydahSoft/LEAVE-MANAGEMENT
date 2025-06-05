@@ -1,5 +1,67 @@
 const jwt = require('jsonwebtoken');
-const { User, SuperAdmin, Principal, HOD, Employee } = require('../models');
+const { User, SuperAdmin, Principal, HOD, Employee, HR } = require('../models');
+
+// Generic protect middleware
+exports.protect = async (req, res, next) => {
+  try {
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+    if (!token) {
+      return res.status(401).json({ msg: 'No token, authorization denied' });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    
+    // Find user based on role and model type
+    let user;
+    switch (decoded.role) {
+      case 'superadmin':
+        user = await SuperAdmin.findById(decoded.id);
+        break;
+      case 'principal':
+        user = await Principal.findById(decoded.id);
+        break;
+      case 'hod':
+        user = await HOD.findById(decoded.id);
+        break;
+      case 'employee':
+        user = await Employee.findById(decoded.id);
+        break;
+      case 'hr':
+        user = await HR.findById(decoded.id);
+        break;
+      default:
+        return res.status(401).json({ msg: 'Invalid role' });
+    }
+
+    if (!user || user.status !== 'active') {
+      return res.status(401).json({ msg: 'Token is not valid' });
+    }
+
+    req.user = {
+      id: user._id,
+      role: decoded.role,
+      campus: user.campus,
+      modelType: decoded.modelType
+    };
+
+    next();
+  } catch (error) {
+    console.error('Protect Middleware Error:', error);
+    res.status(401).json({ msg: 'Authentication failed' });
+  }
+};
+
+// Role-based authorization middleware
+exports.authorize = (...roles) => {
+  return (req, res, next) => {
+    if (!roles.includes(req.user.role)) {
+      return res.status(403).json({ 
+        msg: `User role ${req.user.role} is not authorized to access this route`
+      });
+    }
+    next();
+  };
+};
 
 // Principal authentication
 exports.authPrincipal = async (req, res, next) => {
@@ -210,8 +272,6 @@ exports.authEmployee = async (req, res, next) => {
     res.status(401).json({ msg: 'Authentication failed' });
   }
 };
-
-
 
 // Campus-specific authentication
 exports.authCampus = (allowedCampuses) => {

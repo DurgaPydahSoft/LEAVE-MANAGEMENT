@@ -1,4 +1,4 @@
-const { User, Campus, SuperAdmin, Principal } = require('../models');
+const { User, Campus, SuperAdmin, Principal, HR } = require('../models');
 const jwt = require('jsonwebtoken');
 const { validateEmail, validatePassword } = require('../utils/validators');
 const bcrypt = require('bcryptjs');
@@ -245,10 +245,7 @@ exports.resetPrincipalPassword = async (req, res) => {
   try {
     const { principalId, newPassword } = req.body;
 
-    const principal = await User.findOne({
-      _id: principalId,
-      role: 'principal'
-    });
+    const principal = await Principal.findById(principalId);
 
     if (!principal) {
       return res.status(404).json({ msg: 'Principal not found' });
@@ -298,7 +295,7 @@ exports.getPrincipal = async (req, res) => {
 // Update principal
 exports.updatePrincipal = async (req, res) => {
   try {
-    const { name, email, campus, status } = req.body;
+    const { name, email } = req.body;
     const principalId = req.params.id;
 
     const principal = await Principal.findById(principalId);
@@ -306,8 +303,11 @@ exports.updatePrincipal = async (req, res) => {
       return res.status(404).json({ msg: 'Principal not found' });
     }
 
-    // If email is being changed, check if new email already exists
+    // Validate email if provided
     if (email && email !== principal.email) {
+      if (!validateEmail(email)) {
+        return res.status(400).json({ msg: 'Please provide a valid email address' });
+      }
       const existingPrincipal = await Principal.findOne({ email: email.toLowerCase() });
       if (existingPrincipal) {
         return res.status(400).json({ msg: 'Email already in use' });
@@ -316,12 +316,6 @@ exports.updatePrincipal = async (req, res) => {
     }
 
     if (name) principal.name = name;
-    if (campus) {
-      if (campus.name) principal.campus.name = campus.name;
-      if (campus.type) principal.campus.type = campus.type;
-      if (campus.location) principal.campus.location = campus.location;
-    }
-    if (status) principal.status = status;
 
     await principal.save();
 
@@ -381,6 +375,185 @@ exports.getDashboard = async (req, res) => {
     });
   } catch (error) {
     console.error('Get Dashboard Error:', error);
+    res.status(500).json({ msg: 'Server error' });
+  }
+};
+
+// Create HR
+exports.createHR = async (req, res) => {
+  try {
+    const { name, email, password, campusId } = req.body;
+
+    // Validate input
+    if (!name || !email || !password || !campusId) {
+      return res.status(400).json({ msg: 'Please provide all required fields' });
+    }
+
+    // Check if campus exists
+    const campus = await Campus.findById(campusId);
+    if (!campus) {
+      return res.status(400).json({ msg: 'Campus not found' });
+    }
+
+    // Check if email is already in use
+    const existingHR = await HR.findOne({ email: email.toLowerCase() });
+    if (existingHR) {
+      return res.status(400).json({ msg: 'Email already in use' });
+    }
+
+    // Create HR
+    const hr = new HR({
+      name,
+      email: email.toLowerCase(),
+      password,
+      campus: {
+        type: campus.type,
+        name: campus.name,
+        location: campus.location
+      },
+      status: 'active'
+    });
+
+    await hr.save();
+
+    res.status(201).json({
+      msg: 'HR created successfully',
+      hr: {
+        id: hr._id,
+        name: hr.name,
+        email: hr.email,
+        campus: hr.campus,
+        status: hr.status
+      }
+    });
+  } catch (error) {
+    console.error('Create HR Error:', error);
+    res.status(500).json({ msg: error.message || 'Server error' });
+  }
+};
+
+// Get All HRs
+exports.getAllHRs = async (req, res) => {
+  try {
+    const hrs = await HR.find()
+      .select('-password') // Exclude password from response
+      .sort({ createdAt: -1 });
+
+    res.json(hrs);
+  } catch (error) {
+    console.error('Get HRs Error:', error);
+    res.status(500).json({ msg: error.message || 'Server error' });
+  }
+};
+
+// Update HR Status
+exports.updateHRStatus = async (req, res) => {
+  try {
+    const { hrId, status } = req.body;
+
+    if (!hrId || !status) {
+      return res.status(400).json({ msg: 'Please provide HR ID and status' });
+    }
+
+    if (!['active', 'inactive'].includes(status)) {
+      return res.status(400).json({ msg: 'Invalid status' });
+    }
+
+    const hr = await HR.findById(hrId);
+    if (!hr) {
+      return res.status(404).json({ msg: 'HR not found' });
+    }
+
+    hr.status = status;
+    await hr.save();
+
+    res.json({
+      msg: 'HR status updated successfully',
+      hr: {
+        id: hr._id,
+        name: hr.name,
+        email: hr.email,
+        status: hr.status
+      }
+    });
+  } catch (error) {
+    console.error('Update HR Status Error:', error);
+    res.status(500).json({ msg: error.message || 'Server error' });
+  }
+};
+
+// Reset HR Password
+exports.resetHRPassword = async (req, res) => {
+  try {
+    const { hrId, newPassword } = req.body;
+
+    if (!hrId || !newPassword) {
+      return res.status(400).json({ msg: 'Please provide HR ID and new password' });
+    }
+
+    // Validate password
+    if (!validatePassword(newPassword)) {
+      return res.status(400).json({
+        msg: 'Password must be at least 6 characters long'
+      });
+    }
+
+    const hr = await HR.findById(hrId);
+    if (!hr) {
+      return res.status(404).json({ msg: 'HR not found' });
+    }
+
+    // Assign new password directly; pre-save hook will hash it
+    hr.password = newPassword;
+    hr.lastLogin = null; // Force re-login
+    await hr.save();
+
+    res.json({ msg: 'HR password reset successfully' });
+  } catch (error) {
+    console.error('Reset HR Password Error:', error);
+    res.status(500).json({ msg: error.message || 'Server error' });
+  }
+};
+
+// Update HR
+exports.updateHR = async (req, res) => {
+  try {
+    const { name, email } = req.body;
+    const hrId = req.params.id;
+
+    const hr = await HR.findById(hrId);
+    if (!hr) {
+      return res.status(404).json({ msg: 'HR not found' });
+    }
+
+    // Validate email if provided
+    if (email && email !== hr.email) {
+      if (!validateEmail(email)) {
+        return res.status(400).json({ msg: 'Please provide a valid email address' });
+      }
+      const existingHR = await HR.findOne({ email: email.toLowerCase() });
+      if (existingHR) {
+        return res.status(400).json({ msg: 'Email already in use' });
+      }
+      hr.email = email.toLowerCase();
+    }
+
+    if (name) hr.name = name;
+
+    await hr.save();
+
+    res.json({
+      msg: 'HR updated successfully',
+      hr: {
+        id: hr._id,
+        name: hr.name,
+        email: hr.email,
+        campus: hr.campus,
+        status: hr.status
+      }
+    });
+  } catch (error) {
+    console.error('Update HR Error:', error);
     res.status(500).json({ msg: 'Server error' });
   }
 }; 

@@ -33,6 +33,11 @@ const dayScheduleSchema = new mongoose.Schema({
 });
 
 const leaveRequestSchema = new mongoose.Schema({
+  leaveRequestId: {
+    type: String,
+    unique: true,
+    required: true
+  },
   employeeId: {
     type: mongoose.Schema.Types.ObjectId,
     required: true,
@@ -115,6 +120,43 @@ const leaveRequestSchema = new mongoose.Schema({
   timestamps: true
 });
 
+// Generate unique leave request ID
+leaveRequestSchema.pre('save', async function(next) {
+  if (this.isNew) {
+    try {
+      const Employee = mongoose.model('Employee');
+      const employee = await Employee.findById(this.employeeId);
+      
+      if (!employee) {
+        throw new Error('Employee not found');
+      }
+
+      const currentYear = new Date().getFullYear();
+      const department = employee.department;
+      
+      // Find the latest leave request for this type, year, and department
+      const latestRequest = await this.constructor.findOne({
+        leaveType: this.leaveType,
+        leaveRequestId: new RegExp(`^${this.leaveType}${currentYear}${department}`)
+      }).sort({ leaveRequestId: -1 });
+
+      let sequenceNumber = 1;
+      if (latestRequest) {
+        // Extract the sequence number from the latest request's ID
+        const lastSequence = parseInt(latestRequest.leaveRequestId.slice(-4));
+        sequenceNumber = lastSequence + 1;
+      }
+
+      // Generate the new ID
+      this.leaveRequestId = `${this.leaveType}${currentYear}${department}${sequenceNumber.toString().padStart(4, '0')}`;
+    } catch (error) {
+      next(error);
+      return;
+    }
+  }
+  next();
+});
+
 // Validate dates and number of days
 leaveRequestSchema.pre('validate', function(next) {
   // Convert string dates to Date objects for validation
@@ -193,6 +235,11 @@ leaveRequestSchema.pre('save', async function(next) {
             throw new Error(`Insufficient leave balance. Available: ${employee.leaveBalance} days`);
           }
           break;
+        case 'OD':
+          // No balance check needed for OD
+          break;
+        default:
+          throw new Error('Invalid leave type');
       }
     }
 

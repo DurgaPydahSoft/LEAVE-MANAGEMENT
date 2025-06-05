@@ -16,7 +16,6 @@ const campusSchema = new mongoose.Schema({
   },
   principalId: {
     type: mongoose.Schema.Types.ObjectId,
-    required: true,
     ref: 'Principal'
   },
   branches: [{

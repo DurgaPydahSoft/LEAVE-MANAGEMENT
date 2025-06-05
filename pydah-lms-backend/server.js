@@ -5,6 +5,8 @@ const employeeRoutes = require("./routes/employeeRoutes");
 const hodRoutes = require("./routes/hodRoutes"); // Import HOD routes
 const superAdminRoutes = require("./routes/superAdminRoutes"); // Import Super Admin routes
 const principalRoutes = require("./routes/principalRoutes"); // Import Principal routes
+const hrRoutes = require("./routes/hrRoutes");
+
 const dotenv = require("dotenv");
 const cors = require("cors");
 
@@ -71,6 +73,7 @@ app.use("/api/employee", employeeRoutes);
 app.use("/api/hod", hodRoutes);
 app.use("/api/super-admin", superAdminRoutes);
 app.use("/api/principal", principalRoutes);
+app.use("/api/hr", hrRoutes);
 
 // Debug route to check if server is running
 app.get("/api/health", (req, res) => {
@@ -103,10 +106,5 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
-  console.log('Available routes:');
-  console.log('- /api/auth');
-  console.log('- /api/employee');
-  console.log('- /api/hod');
-  console.log('- /api/super-admin');
-  console.log('- /api/principal');
+  console.log('Enjoyy Coding! 🎉');
 });

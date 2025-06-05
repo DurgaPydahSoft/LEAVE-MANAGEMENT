@@ -27,4 +27,11 @@ router.put('/reset-principal-password', SuperAdminController.resetPrincipalPassw
 // Dashboard
 router.get('/dashboard', SuperAdminController.getDashboard);
 
+// HR management routes
+router.post('/hrs', SuperAdminController.createHR);
+router.get('/hrs', SuperAdminController.getAllHRs);
+router.put('/hrs/status', SuperAdminController.updateHRStatus);
+router.post('/hrs/reset-password', SuperAdminController.resetHRPassword);
+router.put('/hrs/:id', SuperAdminController.updateHR);
+
 module.exports = router; 

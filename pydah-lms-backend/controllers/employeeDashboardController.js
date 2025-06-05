@@ -5,43 +5,20 @@ exports.getDashboard = async (req, res) => {
   try {
     const employeeId = req.user.id;
 
+    // Use populate to get substituteFaculty details
     const employee = await Employee.findById(employeeId)
       .select('-password')
+      .populate({
+        path: 'leaveRequests.alternateSchedule.periods.substituteFaculty',
+        select: 'name employeeId'
+      })
       .lean();
 
     if (!employee) {
       return res.status(404).json({ msg: 'Employee not found' });
     }
 
-    // Manually populate substituteFaculty in leaveRequests
-    const { Employee: EmployeeModel } = require('../models');
-    async function populateSubstituteFaculty(leaveRequests) {
-      for (const leave of leaveRequests) {
-        if (leave.alternateSchedule && Array.isArray(leave.alternateSchedule)) {
-          for (const day of leave.alternateSchedule) {
-            if (day.periods && Array.isArray(day.periods)) {
-              for (const period of day.periods) {
-                if (period.substituteFaculty && typeof period.substituteFaculty === 'object' && period.substituteFaculty.name) {
-                  // Already populated
-                  continue;
-                }
-                if (period.substituteFaculty) {
-                  const faculty = await EmployeeModel.findById(period.substituteFaculty).select('name employeeId');
-                  if (faculty) {
-                    period.substituteFaculty = {
-                      _id: faculty._id,
-                      name: faculty.name,
-                      employeeId: faculty.employeeId
-                    };
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-    await populateSubstituteFaculty(employee.leaveRequests);
+    // No need for manual population now
 
     // Get leave statistics
     const leaveStats = {
@@ -100,7 +77,8 @@ exports.getDashboard = async (req, res) => {
         used: usedCCL,
         remaining: remainingCCL
       },
-      recentLeaveRequests
+      recentLeaveRequests,
+      leaveRequests: employee.leaveRequests // include all leave requests with populated substituteFaculty
     });
   } catch (error) {
     console.error('Get Employee Dashboard Error:', error);

@@ -11,7 +11,8 @@ const PasswordResetModal = ({
   employeeId, 
   token,
   loading,
-  setLoading 
+  setLoading,
+  resetApiPath
 }) => {
   const [newPassword, setNewPassword] = useState('');
   const [error, setError] = useState('');
@@ -24,8 +25,22 @@ const PasswordResetModal = ({
       setLoading(true);
       console.log('Attempting to reset password for employee:', employeeId);
 
-      const response = await axios.put(
-        `${API_BASE_URL}/hod/employees/${employeeId}/reset-password`,
+      // Determine method and param
+      let url = '';
+      let method = 'put';
+      if (resetApiPath) {
+        if (resetApiPath.startsWith('/hr/')) {
+          url = `${API_BASE_URL}${resetApiPath.replace(':id', employeeId)}`;
+          method = 'post';
+        } else {
+          url = `${API_BASE_URL}${resetApiPath.replace(':employeeId', employeeId)}`;
+        }
+      } else {
+        url = `${API_BASE_URL}/hod/employees/${employeeId}/reset-password`;
+      }
+
+      const response = await axios[method](
+        url,
         { newPassword },
         {
           headers: {
