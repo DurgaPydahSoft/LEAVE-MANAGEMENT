@@ -10,6 +10,7 @@ import config from '../config';
 import { FaUserCircle, FaRegCalendarCheck, FaHistory } from 'react-icons/fa';
 import { MdOutlineLogout, MdOutlineWorkHistory } from 'react-icons/md';
 import { BsFillPersonLinesFill } from 'react-icons/bs';
+import Loading from '../components/Loading';
 
 const API_BASE_URL = config.API_BASE_URL;
 
@@ -139,21 +140,12 @@ const EmployeeDashboard = () => {
   };
 
   if (loading) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="flex flex-col items-center">
-          <div className="w-16 h-16 border-4 border-primary rounded-2xl animate-spin"></div>
-          <p className="mt-4 text-lg font-semibold text-gray-700">
-            Loading your dashboard...
-          </p>
-        </div>
-      </div>
-    );
+    return <Loading />;
   }
 
   return (
-    <div className="min-h-screen bg-background py-8 px-2 sm:px-6">
-      <div className="max-w-6xl mx-auto space-y-8">
+    <div className="min-h-screen py-8 px-2 sm:px-6">
+      <div className="max-w-6xl mx-auto space-y-8 ">
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-center bg-secondary rounded-neumorphic shadow-outerRaised p-6 gap-4">
           <div className="flex items-center gap-4 w-full sm:w-auto">

@@ -7,7 +7,7 @@ import HodPasswordResetModal from '../components/HodPasswordResetModal';
 import RemarksModal from '../components/RemarksModal';
 import PrincipalSidebar from '../components/PrincipalSidebar';
 import config from '../config';
-
+import Loading from '../components/Loading';
 
 const API_BASE_URL = config.API_BASE_URL;
 
@@ -1396,16 +1396,7 @@ const PrincipalDashboard = () => {
   }
 
   if (loading) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="flex flex-col items-center">
-          <div className="w-16 h-16 border-4 border-primary rounded-2xl animate-spin"></div>
-          <p className="mt-4 text-lg font-semibold text-gray-700">
-            Loading dashboard...
-          </p>
-        </div>
-      </div>
-    );
+    return <Loading />;
   }
 
   return (

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import config from '../config';
 import { toast } from 'react-toastify';
+import Loading from '../components/Loading';
 
 const API_BASE_URL = config.API_BASE_URL;
 
@@ -353,16 +354,7 @@ const SuperAdminDashboard = () => {
   };
 
   if (loading) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="flex flex-col items-center">
-          <div className="w-16 h-16 border-4 border-primary rounded-2xl animate-spin"></div>
-          <p className="mt-4 text-lg font-semibold text-gray-700">
-            Loading dashboard...
-          </p>
-        </div>
-      </div>
-    );
+    return <Loading />;
   }
 
   return (

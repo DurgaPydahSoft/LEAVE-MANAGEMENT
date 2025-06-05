@@ -8,6 +8,7 @@ import { toast } from 'react-toastify';
 import { createAuthAxios } from '../utils/authAxios';
 import config from '../config';
 import HodSidebar from '../components/HodSidebar';
+import Loading from '../components/Loading';
 
 const API_BASE_URL = config.API_BASE_URL;
 
@@ -796,16 +797,7 @@ const HodDashboard = () => {
   };
 
   if (loading) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="flex flex-col items-center">
-          <div className="w-16 h-16 border-4 border-primary rounded-2xl animate-spin"></div>
-          <p className="mt-4 text-lg font-semibold text-gray-700">
-            Loading dashboard...
-          </p>
-            </div>
-      </div>
-    );
+    return <Loading />;
   }
 
   return (
